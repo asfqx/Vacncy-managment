@@ -1,8 +1,8 @@
-from .enum import UserRole
 from .model import User
+from .init_superuser import create_first_superuser
 
 
 __all__ = (
-    "UserRole",
     "User",
+    "create_first_superuser",
 )

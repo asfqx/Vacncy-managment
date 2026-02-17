@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, String, func, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
-
-from .enum import UserRole
+from app.enum import UserRole, UserStatus
 
 
 class User(Base):
@@ -19,6 +18,11 @@ class User(Base):
     role: Mapped[UserRole]
     
     password_hash: Mapped[str] = mapped_column(String(255))
+    
+    status: Mapped[UserStatus] = mapped_column(
+        Enum(UserStatus, name="userstatus"),
+        default=UserStatus.ACTIVE
+    )
     
     email_confirmed: Mapped[bool] = mapped_column(default=False)
     
