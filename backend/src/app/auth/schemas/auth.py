@@ -13,7 +13,6 @@ from app.auth.constant import (
     MIN_USERNAME_LENGTH,
     MAX_FIO_LENGTH,
     MIN_FIO_LENGTH,
-    MAX_TELEGRAM_LINK_LENGTH,
 )
 from app.enum import UserRole
 
@@ -38,11 +37,8 @@ class CreateRegisterRequest(BaseModel):
         min_length=MIN_FIO_LENGTH,
         max_length=MAX_FIO_LENGTH,
     )
-
-    telegram_link: str = Field(
-        ...,
-        max_length=MAX_TELEGRAM_LINK_LENGTH,
-    )
+    
+    role: UserRole
 
 
 class CreateSuperuserRequest(CreateRegisterRequest):

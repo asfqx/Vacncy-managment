@@ -4,7 +4,8 @@ import redis.asyncio as redis
 from redis.asyncio import Redis
 
 from app.adapters.cache.exception import GetRuntimeError
-from app.adapters.cache.base import BaseCacheAdapter
+
+from .base import BaseCacheAdapter
 
 
 RedisValue = bytes | str | memoryview

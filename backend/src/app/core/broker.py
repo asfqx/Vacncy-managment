@@ -97,4 +97,4 @@ broker = (
     )
 )
 
-taskiq_fastapi.init(broker, "app.main:fastapi_app")
+taskiq_fastapi.init(broker, "app.main:app")

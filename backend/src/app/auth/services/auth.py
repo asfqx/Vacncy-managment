@@ -20,6 +20,7 @@ from app.users.model import User
 from app.users.repository import UserRepository
 
 from .token import JWTTokenService
+from .email_confirm import EmailConfirmService
 
 
 class AuthService:
@@ -40,7 +41,6 @@ class AuthService:
             password_hash=Argon2Hasher.hash(data.password),
             email=data.email,
             fio=data.fio,
-            telegram_link=data.telegram_link,
             username=data.username,
             role=UserRole.ADMIN,
         )
@@ -56,8 +56,8 @@ class AuthService:
         email: str,
         username: str,
         password: str,
+        role: UserRole,
         fio: str,
-        telegram_link: str,
         background: BackgroundTasks,
         session: AsyncSession,
     ) -> None:
@@ -74,9 +74,9 @@ class AuthService:
         user = User(
             password_hash=Argon2Hasher.hash(password),
             email=email.lower(),
+            role = role,
             username=username,
             fio=fio,
-            telegram_link=telegram_link,
         )
 
         await UserRepository.create(user, session)

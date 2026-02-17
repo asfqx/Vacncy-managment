@@ -21,7 +21,7 @@ class Base(DeclarativeBase, AsyncAttrs):
     @classmethod
     def __tablename__(cls) -> str:
         
-        return cls.__name__.lower()
+        return cls.__name__.lower() + "s"
     
     
 engine = create_async_engine(
