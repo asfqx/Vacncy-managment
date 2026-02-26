@@ -7,7 +7,8 @@ volumes:
   redis_data:
   admin_data:
   bot_states:
-  venv_data:   # виртуальное окружение для контейнера
+  venv_data:
+  esdata:
 
 services:
 
@@ -129,6 +130,49 @@ services:
         condition: service_started
       taskiq_scheduler:
         condition: service_started
+    restart: always
+    networks:
+      - vacancy_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:5173
+      - http.cors.allow-credentials=true
+      - http.cors.allow-headers=Authorization,Content-Type
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: always
+    networks:
+      - vacancy_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     restart: always
     networks:
       - vacancy_network
