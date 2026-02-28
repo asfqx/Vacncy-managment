@@ -9,6 +9,9 @@ from app.users import create_first_superuser
 from app.adapters.s3 import s3_adapter
 from app.core import settings
 from app.constant import AVATARS_BUCKET, AI_MODELS
+from app.vacancy import v1_router as vacancy_router
+from app.mock import insert_mock_vacancies
+from app.core import AsyncSessionLocal
 
 
 @asynccontextmanager
@@ -20,9 +23,12 @@ async def lifespan(app: FastAPI):
     await create_first_superuser()
 
     app.include_router(auth_router)
+    app.include_router(vacancy_router)
+    
+    async with AsyncSessionLocal() as session:
+        await insert_mock_vacancies(session)
 
     yield
-        # pyright: ignore
 
 app = FastAPI(
     lifespan=lifespan,

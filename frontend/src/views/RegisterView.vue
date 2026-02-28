@@ -110,7 +110,7 @@ async function onSubmit() {
     username: username.value.trim(),
     password: password.value,
     fio: fio.value.trim(),
-    role: "employer",
+    role: "candidate",
   });
 
   // ✅ следующий шаг: форма подтверждения почты

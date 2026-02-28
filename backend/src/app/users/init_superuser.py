@@ -2,7 +2,7 @@ from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
 from app.auth.schemas.auth import CreateSuperuserRequest
-from app.core.db import AsyncSessionLocal
+from app.core import AsyncSessionLocal
 from app.users.repository import UserRepository
 
 
