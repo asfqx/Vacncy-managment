@@ -91,7 +91,7 @@ class CompanyService:
         session: AsyncSession,
     ) -> SearchRequest:
         
-        company = await CompanyRepository.get_by_title(data.title, session)
+        search_request = await SearchRequest.get_by_title(data.title, session)
         
         if company:
             raise HTTPException(
