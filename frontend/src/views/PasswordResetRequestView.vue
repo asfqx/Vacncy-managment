@@ -84,13 +84,13 @@ async function onSubmit() {
 
 <style scoped>
 .form { display: grid; gap: 12px; }
-.success { margin: 6px 0 0; color: #7CFF9B; font-size: 13px; }
-.error { margin: 6px 0 0; color: #ff6b6b; font-size: 13px; }
+.success { margin: 6px 0 0; color: #7CFF9B; font-size: 15px; }
+.error { margin: 6px 0 0; color: #ff6b6b; font-size: 15px; }
 
 .hint {
   margin-top: 10px;
   text-align: center;
-  font-size: 13px;
+  font-size: 15px;
   color: rgba(232, 232, 232, 0.75);
 }
 .link {

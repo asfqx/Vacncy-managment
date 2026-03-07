@@ -7,11 +7,11 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from app.auth import auth_router
 from app.users import create_first_superuser
 from app.adapters.s3 import s3_adapter
-from app.core import settings
+from app.core import settings, AsyncSessionLocal
 from app.constant import AVATARS_BUCKET, AI_MODELS
-from app.vacancy import v1_router as vacancy_router
+from app.vacancy import search_router as vacancy_router
 from app.mock import insert_mock_vacancies
-from app.core import AsyncSessionLocal
+from app.company import company_router
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
 
     app.include_router(auth_router)
     app.include_router(vacancy_router)
+    app.include_router(company_router)
     
     async with AsyncSessionLocal() as session:
         await insert_mock_vacancies(session)

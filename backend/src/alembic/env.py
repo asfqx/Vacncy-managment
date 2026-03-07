@@ -10,7 +10,8 @@ from alembic import context
 
 from app.core import Base, settings
 from app.users.model import User
-from app.vacancy.model import Vacancy
+from app.vacancy.models.vacancy import Vacancy
+from app.vacancy.models.search_request import SearchRequest
 from app.company.model import Company
 
 config = context.config

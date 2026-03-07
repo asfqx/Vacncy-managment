@@ -1,17 +1,18 @@
 from typing import Sequence
 from uuid import UUID
 
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.error_handler import handle_connection_errors, handle_model_errors
 from app.users.model import User
 from app.enum import UserRole
+from app.vacancy.filter import VacancyFilterDepends, VacancyFilterQueryParams
+from app.vacancy.schemas.vacancy import VacancyUpdateRequest, VacancyCreateRequest
+from app.vacancy.repositories.vacancy import VacancyRepository
+from app.vacancy.models.vacancy import Vacancy
 
-from .filter import VacancyFilterDepends
-from .schema import VacancyUpdateRequest, VacancyCreateRequest
-from .repository import VacancyRepository
-from .model import Vacancy
+from .search_request import SearchRequestService
 
 
 class VacancyService:
@@ -20,8 +21,10 @@ class VacancyService:
     @handle_model_errors
     @handle_connection_errors
     async def search(
+        user_uuid: UUID,
         vacancy_name: str, 
         filters: VacancyFilterDepends, 
+        background: BackgroundTasks,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
         
@@ -33,16 +36,22 @@ class VacancyService:
                 "Вакансии не найдены",
             )
             
+        background.add_task(
+            SearchRequestService.create,
+            user_uuid,
+            vacancy_name,
+        )
         return vacancies
     
     @staticmethod
     @handle_model_errors
     @handle_connection_errors
     async def get_all(
+        filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
         
-        vacancies = await VacancyRepository.get_all(session)
+        vacancies = await VacancyRepository.get_all(filters, session)
         
         if not vacancies:
             raise HTTPException(
@@ -111,4 +120,22 @@ class VacancyService:
         )
             
         return await VacancyRepository.create(vacancy, session)
+    
+    @staticmethod
+    @handle_model_errors
+    @handle_connection_errors
+    async def get(
+        vacancy_uuid: UUID,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        vacancy = await VacancyRepository.get(vacancy_uuid, session)
+        
+        if not vacancy:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                "Такой вакансии не существует",
+            )
+        
+        return vacancy
     

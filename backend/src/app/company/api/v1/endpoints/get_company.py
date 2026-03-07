@@ -1,39 +1,38 @@
-from typing import Sequence
+from uuid import UUID
 
 from fastapi import APIRouter, status
 
 from app.core import DBSession, RateLimitErrorResponse
 from app.error_handler import error_schemas
-from app.vacancy.filter import VacancyFilterDepends
-from app.vacancy.model import Vacancy
-from app.vacancy.schema import VacancyResponse
-from app.vacancy.service import VacancyService
 from app.users.dependency import AuthenticatedActiveUser
+from app.company.schema import CompanyResponse
+from app.company.model import Company
+from app.company.service import CompanyService
 
 
 router = APIRouter()
 
 @router.get(
-    "/",
+    "/{company_uuid}",
     status_code=status.HTTP_200_OK,
-    summary="Вывести все вакансии",
+    summary="Вывести компанию по uuid",
     description=(
-        "Возвращает информацию обо всех вакансиях. "
-        "Требуется JWT access-токен в заголовке Authorization. "
+        "Возвращает информацию о компании по uuid"
+        "Требуется JWT access-токен в заголовке Authorization и роль Администратор. "
         "Если токен отсутствует или недействителен — возвращается ошибка 401."
     ),
-    response_model=list[VacancyResponse],
+    response_model=CompanyResponse,
     responses={
         200: {
-            "description": "Вакансии успешно получены",
-            "model": VacancyResponse,
+            "description": "Компания успешно получена",
+            "model": CompanyResponse,
         },
         401: {
             "description": "Пользователь не авторизован",
             "model": error_schemas.UnauthorizedErrorResponse,
         },
         404: {
-            "description": "Вакансии не найдены",
+            "description": "Поисковые запросы не найдены",
             "model": error_schemas.NotFoundErrorResponse,
         },
         429: {
@@ -46,34 +45,36 @@ router = APIRouter()
         },
     },
 )
-async def get_all(
+async def get(
+    company_uuid: UUID,
     user: AuthenticatedActiveUser,
     sesssion: DBSession,
-) -> Sequence[Vacancy]:
+) -> Company:
 
-    return await VacancyService.get_all(session=sesssion)
+    return await CompanyService.get_company_by_id(company_uuid, session=sesssion)
+
 
 @router.get(
-    "/search",
+    "/{company_uuid}",
     status_code=status.HTTP_200_OK,
-    summary="Поиск вакансий",
+    summary="Вывести компанию по uuid",
     description=(
-        "Возвращает информацию о найденных вакансиях. "
-        "Требуется JWT access-токен в заголовке Authorization. "
+        "Возвращает информацию о компании по uuid"
+        "Требуется JWT access-токен в заголовке Authorization и роль Администратор. "
         "Если токен отсутствует или недействителен — возвращается ошибка 401."
     ),
-    response_model=list[VacancyResponse],
+    response_model=CompanyResponse,
     responses={
         200: {
-            "description": "Вакансии успешно получены",
-            "model": VacancyResponse,
+            "description": "Компания успешно получена",
+            "model": CompanyResponse,
         },
         401: {
             "description": "Пользователь не авторизован",
             "model": error_schemas.UnauthorizedErrorResponse,
         },
         404: {
-            "description": "Вакансии не найдены",
+            "description": "Поисковые запросы не найдены",
             "model": error_schemas.NotFoundErrorResponse,
         },
         429: {
@@ -86,17 +87,10 @@ async def get_all(
         },
     },
 )
-async def search(
+async def get_mine(
+    company_uuid: UUID,
     user: AuthenticatedActiveUser,
-    vacancy_title: str,
-    filters: VacancyFilterDepends,
     sesssion: DBSession,
-) -> Sequence[Vacancy]:
+) -> Company:
 
-    return await VacancyService.search(
-        vacancy_name=vacancy_title,
-        filters=filters,
-        session=sesssion,
-    )
-
-
+    return await CompanyService.get_company(user, session=sesssion)

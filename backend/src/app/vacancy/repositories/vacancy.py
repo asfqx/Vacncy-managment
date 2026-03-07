@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enum import VacancyStatus
 
-from .filter import VacancyFilterQueryParams
-from .model import Vacancy
+from app.vacancy.filter import VacancyFilterQueryParams
+from app.vacancy.models.vacancy import Vacancy
 
 
 class VacancyRepository:
@@ -22,8 +22,9 @@ class VacancyRepository:
             "company_id": lambda v: Vacancy.company_id == v,
             "salary_from": lambda v: Vacancy.salary >= v,
             "salary_to": lambda v: Vacancy.salary <= v,
-            "remote": lambda v: Vacancy.remote.is_(True) if v is True else None,
+            "remote": lambda v: Vacancy.remote.is_(v),
             "include_archived": lambda v: None if v else Vacancy.status == VacancyStatus.ACTIVE,
+            "cursor": lambda v: Vacancy.created_at < v,
         }
 
         return [
@@ -58,10 +59,18 @@ class VacancyRepository:
     
     @staticmethod
     async def get_all(
+        filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
+        stmt_filters = filters.model_dump(exclude_none=True)
+        conditions = VacancyRepository._build_conditions(stmt_filters)
 
-        stmt = select(Vacancy)
+        stmt = (
+            select(Vacancy)
+            .where(*conditions)
+            .limit(filters.limit + 1 if filters.limit else 51)
+        )
 
         result = await session.execute(stmt)
 
@@ -77,21 +86,26 @@ class VacancyRepository:
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions = VacancyRepository._build_conditions(stmt_filters)
         
-        tsq = func.websearch_to_tsquery("russian", func.unaccent(vacancy_name))
-        
-        rank_fts = func.ts_rank_cd(Vacancy.search_vector, tsq)
+        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(vacancy_name))
+        tsq_en = func.websearch_to_tsquery("english", func.unaccent(vacancy_name))
+
+        rank_ru = func.ts_rank_cd(Vacancy.search_vector, tsq_ru)
+        rank_en = func.ts_rank_cd(Vacancy.search_vector, tsq_en)
+
         rank_trgm = func.similarity(Vacancy.title, vacancy_name)
-        
-        score = (rank_fts + (rank_trgm * 0.15)).label("score")
-        
+
+        score = (func.greatest(rank_ru, rank_en) + (rank_trgm * 0.15)).label("score")
+
         stmt = (
             select(Vacancy, score)
             .where(*conditions)
             .where(
-                Vacancy.search_vector.op("@@")(tsq) 
-                | (rank_trgm > 0.2)              
+                Vacancy.search_vector.op("@@")(tsq_ru)
+                | Vacancy.search_vector.op("@@")(tsq_en)
+                | (rank_trgm > 0.2)
             )
             .order_by(desc(score), desc(Vacancy.created_at))
+            .limit(filters.limit + 1 if filters.limit else 51)
         )
 
         result = await session.execute(stmt)

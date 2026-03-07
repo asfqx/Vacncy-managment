@@ -1,5 +1,4 @@
-from .api import search_router
-
+from .router import search_router
 
 __all__ = (
     "search_router",

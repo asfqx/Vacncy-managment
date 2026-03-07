@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.users.repository import UserRepository
-from app.vacancy.model import Vacancy
-from app.vacancy.repository import VacancyRepository
+from app.vacancy.models.vacancy import Vacancy
+from app.vacancy.repositories.vacancy import VacancyRepository
 from app.company.model import Company
 from app.company.repository import CompanyRepository
 from app.mock.data import MOCK_VACANCIES

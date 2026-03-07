@@ -14,7 +14,6 @@ class SearchRequest(Base):
             "users.uuid", 
             ondelete="CASCADE",
         ), 
-        unique=True
     )
     
     request: Mapped[str]

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +21,7 @@ class CompanyService:
     async def get_company(
         current_user: User,
         session: AsyncSession,
-    ) -> Company | None:
+    ) -> Company:
 
         exist_user = await UserRepository.get(current_user.uuid, session)
 
@@ -104,4 +106,22 @@ class CompanyService:
         )
             
         return await CompanyRepository.create(company, session)
+    
+    @staticmethod
+    @handle_model_errors
+    @handle_connection_errors
+    async def get_company_by_id(
+        company_id: UUID, 
+        session: AsyncSession,
+    ) -> Company:
+        
+        company = await CompanyRepository.get(company_id, session)
+        
+        if not company:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                "Такой компании не существует",
+            )
+        
+        return company
     

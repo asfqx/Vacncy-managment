@@ -4,10 +4,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .model import SearchRequest
+from app.vacancy.models.search_request import SearchRequest
 
 
 class SearchRequestRepository:
+    
 
     @staticmethod
     async def get(

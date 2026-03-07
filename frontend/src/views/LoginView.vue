@@ -82,12 +82,12 @@ async function onSubmit() {
 .error {
   margin: 6px 0 0;
   color: #ff6b6b;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .hint {
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 15px;
   color: rgba(232, 232, 232, 0.75);
   text-align: center;
 }
