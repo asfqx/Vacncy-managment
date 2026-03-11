@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from "vue";
+﻿import { computed, reactive, ref } from "vue";
 import { vacanciesApi } from "../api/vacancies";
 
 function buildParams({ query, filters, cursor, limit }) {
@@ -76,12 +76,10 @@ export function useVacancies() {
         } catch (e) {
           if (e?.response?.status !== 404) throw e;
 
-          // fallback → all
           mode.value = "all";
           const data = await vacanciesApi.getAll(params);
           items.value = data || [];
         }
-
       } else {
         mode.value = "search";
 
@@ -99,7 +97,6 @@ export function useVacancies() {
       const next = computeNextCursor(items.value);
       cursor.value = next;
       hasMore.value = Boolean(next && items.value.length >= limit);
-
     } catch (e) {
       const status = e?.response?.status;
 
@@ -108,7 +105,6 @@ export function useVacancies() {
       else error.value = "Ошибка сервера или сети";
 
       hasMore.value = false;
-
     } finally {
       loading.value = false;
     }
@@ -133,17 +129,9 @@ export function useVacancies() {
 
       let data;
 
-      if (mode.value === "search") {
-        data = await vacanciesApi.search(params);
-      }
-
-      else if (mode.value === "recommendations") {
-        data = await vacanciesApi.getRecommendations(params);
-      }
-
-      else {
-        data = await vacanciesApi.getAll(params);
-      }
+      if (mode.value === "search") data = await vacanciesApi.search(params);
+      else if (mode.value === "recommendations") data = await vacanciesApi.getRecommendations(params);
+      else data = await vacanciesApi.getAll(params);
 
       const batch = data || [];
 
@@ -156,9 +144,7 @@ export function useVacancies() {
 
       const next = computeNextCursor(batch);
       cursor.value = next;
-
       hasMore.value = Boolean(next && batch.length >= limit);
-
     } catch (e) {
       const status = e?.response?.status;
 
@@ -166,7 +152,6 @@ export function useVacancies() {
       else error.value = "Ошибка сервера или сети";
 
       hasMore.value = false;
-
     } finally {
       loadingMore.value = false;
     }

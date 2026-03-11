@@ -8,7 +8,7 @@
 
 <script setup>
 defineProps({
-  badge: { type: String, default: "Ñêîðî" },
+  badge: { type: String, default: "Ð¡ÐºÐ¾Ñ€Ð¾" },
   title: { type: String, required: true },
   description: { type: String, required: true },
 });
@@ -21,7 +21,6 @@ defineProps({
   background: rgba(15, 16, 22, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .panel__badge {
   display: inline-flex;
   margin-bottom: 12px;
@@ -32,12 +31,7 @@ defineProps({
   font-size: 13px;
   font-weight: 700;
 }
-
-.panel__title {
-  margin: 0;
-  font-size: 26px;
-}
-
+.panel__title { margin: 0; font-size: 26px; }
 .panel__text {
   margin: 12px 0 0;
   color: rgba(255, 255, 255, 0.72);

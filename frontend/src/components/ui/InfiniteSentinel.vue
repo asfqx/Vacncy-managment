@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div ref="el" class="sentinel"></div>
 </template>
 
@@ -8,7 +8,7 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 const props = defineProps({
   onReach: { type: Function, required: true },
   disabled: { type: Boolean, default: false },
-  rootMargin: { type: String, default: "600px" }, // заранее подгружать
+  rootMargin: { type: String, default: "600px" },
 });
 
 const el = ref(null);

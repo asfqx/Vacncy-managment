@@ -1,7 +1,7 @@
 <template>
   <AuthCard
     title="Сброс пароля"
-    subtitle="Введите email — мы отправим код для восстановления"
+    subtitle="Введите email, мы отправим код для восстановления"
   >
     <form class="form" @submit.prevent="onSubmit">
       <BaseInput
@@ -35,12 +35,10 @@ import BaseButton from "../components/ui/BaseButton.vue";
 import { authApi } from "../api/auth";
 
 const router = useRouter();
-
 const email = ref("");
 const loading = ref(false);
 const error = ref("");
 const success = ref("");
-
 const fieldErrors = reactive({ email: "" });
 
 function isEmail(value) {
@@ -65,9 +63,7 @@ async function onSubmit() {
   loading.value = true;
   try {
     await authApi.passwordResetRequest(email.value.trim());
-
     success.value = "Код отправлен на почту. Введите его на следующем шаге.";
-    // перекидываем на confirm и передаём email
     setTimeout(() => {
       router.push({ path: "/password-reset/confirm", query: { email: email.value.trim() } });
     }, 700);
@@ -84,9 +80,8 @@ async function onSubmit() {
 
 <style scoped>
 .form { display: grid; gap: 12px; }
-.success { margin: 6px 0 0; color: #7CFF9B; font-size: 15px; }
+.success { margin: 6px 0 0; color: #7cff9b; font-size: 15px; }
 .error { margin: 6px 0 0; color: #ff6b6b; font-size: 15px; }
-
 .hint {
   margin-top: 10px;
   text-align: center;

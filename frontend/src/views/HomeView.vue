@@ -1,17 +1,17 @@
 <template>
   <DashboardShell
-    title="Поиск вакансий"
-    subtitle="Кандидату доступны поиск вакансий, история откликов, создание резюме и профиль."
-    role-label="Кандидат"
+    title="РџРѕРёСЃРє РІР°РєР°РЅСЃРёР№"
+    subtitle="РљР°РЅРґРёРґР°С‚Сѓ РґРѕСЃС‚СѓРїРЅС‹ РїРѕРёСЃРє РІР°РєР°РЅСЃРёР№, РёСЃС‚РѕСЂРёСЏ РѕС‚РєР»РёРєРѕРІ, СѓРїСЂР°РІР»РµРЅРёРµ СЂРµР·СЋРјРµ Рё РїСЂРѕС„РёР»СЊ."
+    role-label="РљР°РЅРґРёРґР°С‚"
     :nav-items="navItems"
-    :primary-action="{ to: '/candidate/resume', label: 'Создать резюме' }"
-    home-path="/vacancies"
-    avatar-letter="К"
+    :primary-action="{ to: '/candidate/resume', label: 'РЎРѕР·РґР°С‚СЊ СЂРµР·СЋРјРµ' }"
+    home-path="/home"
+    avatar-letter="Рљ"
   >
     <template #aside>
-      <UiCard title="История откликов" subtitle="Личный раздел" />
-      <UiCard title="Мои резюме" subtitle="Редактирование" />
-      <UiCard title="Избранные вакансии" subtitle="Быстрый доступ" />
+      <UiCard title="РСЃС‚РѕСЂРёСЏ РѕС‚РєР»РёРєРѕРІ" subtitle="Р›РёС‡РЅС‹Р№ СЂР°Р·РґРµР»" />
+      <UiCard title="РњРѕРё СЂРµР·СЋРјРµ" subtitle="РџРѕРґ СЂСѓРєРѕР№" />
+      <UiCard title="РР·Р±СЂР°РЅРЅС‹Рµ РІР°РєР°РЅСЃРёРё" subtitle="Р‘С‹СЃС‚СЂС‹Р№ РґРѕСЃС‚СѓРї" />
     </template>
 
     <div class="searchPanel">
@@ -21,72 +21,51 @@
           <input
             v-model="query"
             class="searchInput"
-            placeholder="Профессия, должность или компания"
+            placeholder="РџСЂРѕС„РµСЃСЃРёСЏ, РґРѕР»Р¶РЅРѕСЃС‚СЊ РёР»Рё РєРѕРјРїР°РЅРёСЏ"
             @keydown.enter.prevent="onSearch"
           />
         </div>
         <button class="searchBtn" type="button" :disabled="loading" @click="onSearch">
-          Найти
+          РќР°Р№С‚Рё
         </button>
       </div>
 
       <div class="filtersLine">
-        <input v-model="filters.city" class="miniInput" placeholder="Город" />
+        <input v-model="filters.city" class="miniInput" placeholder="Р“РѕСЂРѕРґ" />
 
         <div class="workFormat">
-          <button
-            class="formatBtn"
-            :class="{ active: filters.remote === null }"
-            type="button"
-            @click="filters.remote = null"
-          >
-            Любой
+          <button class="formatBtn" :class="{ active: filters.remote === null }" type="button" @click="filters.remote = null">
+            Р›СЋР±РѕР№
           </button>
-
-          <button
-            class="formatBtn"
-            :class="{ active: filters.remote === true }"
-            type="button"
-            @click="filters.remote = true"
-          >
-            Удаленно
+          <button class="formatBtn" :class="{ active: filters.remote === true }" type="button" @click="filters.remote = true">
+            РЈРґР°Р»РµРЅРЅРѕ
           </button>
-
-          <button
-            class="formatBtn"
-            :class="{ active: filters.remote === false }"
-            type="button"
-            @click="filters.remote = false"
-          >
-            Офис
+          <button class="formatBtn" :class="{ active: filters.remote === false }" type="button" @click="filters.remote = false">
+            РћС„РёСЃ
           </button>
         </div>
 
-        <input v-model="filters.salary_from" class="miniInput" inputmode="numeric" placeholder="З/п от" />
-        <input v-model="filters.salary_to" class="miniInput" inputmode="numeric" placeholder="З/п до" />
+        <input v-model="filters.salary_from" class="miniInput" inputmode="numeric" placeholder="Р—/Рї РѕС‚" />
+        <input v-model="filters.salary_to" class="miniInput" inputmode="numeric" placeholder="Р—/Рї РґРѕ" />
 
         <button class="ghostBtn" type="button" :disabled="loading" @click="clearAll">
-          Сбросить
+          РЎР±СЂРѕСЃРёС‚СЊ
         </button>
       </div>
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
-    <InlineLoader v-else-if="loading" text="Загружаем вакансии..." />
+    <InlineLoader v-else-if="loading" text="Р—Р°РіСЂСѓР¶Р°РµРј РІР°РєР°РЅСЃРёРё..." />
 
     <div v-if="!loading" class="list">
       <VacancyCardHH v-for="vacancy in items" :key="vacancy.uuid" :vacancy="vacancy" />
 
-      <InlineLoader v-if="loadingMore" text="Подгружаем еще..." />
+      <InlineLoader v-if="loadingMore" text="РџРѕРґРіСЂСѓР¶Р°РµРј РµС‰Рµ..." />
 
-      <InfiniteSentinel
-        v-if="hasMore"
-        :disabled="loadingMore || loading"
-        :on-reach="loadMore"
-      />
+      <InfiniteSentinel v-if="hasMore" :disabled="loadingMore || loading" :on-reach="loadMore" />
 
-      <p v-if="isEmpty" class="muted center">Ничего не найдено</p>
-      <p v-else-if="!hasMore && items.length" class="muted center">Это все вакансии</p>
+      <p v-if="isEmpty" class="muted center">РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ</p>
+      <p v-else-if="!hasMore && items.length" class="muted center">Р­С‚Рѕ РІСЃРµ РІР°РєР°РЅСЃРёРё</p>
     </div>
   </DashboardShell>
 </template>
@@ -101,25 +80,14 @@ import VacancyCardHH from "../components/vacancies/VacancyCard.vue";
 import { useVacancies } from "../composables/useVacancies";
 
 const navItems = [
-  { to: "/vacancies", label: "Поиск вакансий" },
-  { to: "/candidate/applications", label: "Мои отклики" },
-  { to: "/candidate/resume", label: "Мои резюме" },
-  { to: "/profile", label: "Профиль" },
+  { to: "/home", label: "Р“Р»Р°РІРЅР°СЏ" },
+  { to: "/vacancies", label: "РџРѕРёСЃРє РІР°РєР°РЅСЃРёР№" },
+  { to: "/candidate/applications", label: "РњРѕРё РѕС‚РєР»РёРєРё" },
+  { to: "/candidate/resume", label: "РњРѕРё СЂРµР·СЋРјРµ" },
+  { to: "/profile", label: "РџСЂРѕС„РёР»СЊ" },
 ];
 
-const {
-  items,
-  loading,
-  loadingMore,
-  error,
-  query,
-  filters,
-  hasMore,
-  isEmpty,
-  loadFirst,
-  loadMore,
-  reset,
-} = useVacancies();
+const { items, loading, loadingMore, error, query, filters, hasMore, isEmpty, loadFirst, loadMore, reset } = useVacancies();
 
 async function onSearch() {
   await loadFirst();
@@ -141,25 +109,19 @@ onMounted(loadFirst);
 
 <style scoped>
 .searchPanel,
-.list {
-  display: grid;
-  gap: 12px;
-}
-
+.list { display: grid; gap: 12px; }
 .searchPanel {
   padding: 18px;
   border-radius: 24px;
   background: rgba(15, 16, 22, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .searchRow {
   display: grid;
   grid-template-columns: 1fr 120px;
   gap: 10px;
   align-items: center;
 }
-
 .searchInputWrap {
   height: 46px;
   display: flex;
@@ -170,12 +132,7 @@ onMounted(loadFirst);
   background: #0f1016;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-.searchIcon {
-  opacity: 0.7;
-  font-size: 14px;
-}
-
+.searchIcon { opacity: 0.7; font-size: 14px; }
 .searchInput {
   width: 100%;
   height: 100%;
@@ -185,7 +142,6 @@ onMounted(loadFirst);
   outline: none;
   font-size: 16px;
 }
-
 .searchBtn {
   height: 46px;
   border-radius: 14px;
@@ -195,20 +151,14 @@ onMounted(loadFirst);
   font-weight: 800;
   cursor: pointer;
 }
-
 .searchBtn:disabled,
-.ghostBtn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
+.ghostBtn:disabled { opacity: 0.65; cursor: not-allowed; }
 .filtersLine {
   display: grid;
   grid-template-columns: 1fr 1fr 0.9fr 0.9fr auto;
   gap: 10px;
   align-items: center;
 }
-
 .miniInput {
   height: 40px;
   border-radius: 12px;
@@ -218,7 +168,6 @@ onMounted(loadFirst);
   color: #eaeaf0;
   outline: none;
 }
-
 .workFormat {
   display: flex;
   gap: 6px;
@@ -227,7 +176,6 @@ onMounted(loadFirst);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 .formatBtn {
   height: 32px;
   padding: 0 12px;
@@ -238,12 +186,7 @@ onMounted(loadFirst);
   font-weight: 600;
   cursor: pointer;
 }
-
-.formatBtn.active {
-  background: #2f73ff;
-  color: #fff;
-}
-
+.formatBtn.active { background: #2f73ff; color: #fff; }
 .ghostBtn {
   height: 40px;
   border-radius: 12px;
@@ -254,32 +197,12 @@ onMounted(loadFirst);
   font-weight: 700;
   cursor: pointer;
 }
-
-.error {
-  color: #ff6b6b;
-  font-size: 15px;
-  margin: 0;
-}
-
-.muted {
-  opacity: 0.75;
-  font-size: 15px;
-  margin: 2px 0 0;
-}
-
-.center {
-  text-align: center;
-  padding: 8px 0;
-}
-
+.error { color: #ff6b6b; font-size: 15px; margin: 0; }
+.muted { opacity: 0.75; font-size: 15px; margin: 2px 0 0; }
+.center { text-align: center; padding: 8px 0; }
 @media (max-width: 980px) {
   .searchRow,
-  .filtersLine {
-    grid-template-columns: 1fr;
-  }
-
-  .workFormat {
-    flex-wrap: wrap;
-  }
+  .filtersLine { grid-template-columns: 1fr; }
+  .workFormat { flex-wrap: wrap; }
 }
 </style>

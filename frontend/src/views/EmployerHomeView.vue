@@ -1,63 +1,67 @@
 <template>
   <DashboardShell
-    title="Поиск резюме"
-    subtitle="Работодателю доступны поиск резюме, отклики на вакансии, создание вакансии и профиль."
-    role-label="Работодатель"
+    title="РџРѕРёСЃРє СЂРµР·СЋРјРµ"
+    role-label="Р Р°Р±РѕС‚РѕРґР°С‚РµР»СЊ"
     :nav-items="navItems"
-    :primary-action="{ to: '/employer/vacancies/create', label: 'Создать вакансию' }"
-    home-path="/employer/resumes"
-    avatar-letter="Р"
+    :primary-action="{ to: '/employer/vacancies/create', label: 'РЎРѕР·РґР°С‚СЊ РІР°РєР°РЅСЃРёСЋ' }"
+    :secondary-action="secondaryAction"
+    home-path="/home"
+    avatar-letter="Р "
   >
     <template #aside>
-      <UiCard title="Отклики по вакансиям" subtitle="Под контролем" />
-      <UiCard title="Активные вакансии" subtitle="Размещение" />
-      <UiCard title="Профиль компании" subtitle="Настройки" />
+      <UiCard title="РћС‚РєР»РёРєРё РїРѕ РІР°РєР°РЅСЃРёСЏРј" subtitle="РџРѕРґ РєРѕРЅС‚СЂРѕР»РµРј" />
+      <UiCard title="РђРєС‚РёРІРЅС‹Рµ РІР°РєР°РЅСЃРёРё" subtitle="Р Р°Р·РјРµС‰РµРЅРёРµ" />
+      <UiCard title="РџСЂРѕС„РёР»СЊ РєРѕРјРїР°РЅРёРё" subtitle="РќР°СЃС‚СЂРѕР№РєРё" />
     </template>
 
     <div class="panel searchPanel">
       <div class="searchRow">
         <div class="searchInputWrap">
           <span class="searchIcon">Q</span>
-          <input v-model="query" class="searchInput" placeholder="Должность, навык или город" />
+          <input v-model="query" class="searchInput" placeholder="Р”РѕР»Р¶РЅРѕСЃС‚СЊ, РЅР°РІС‹Рє РёР»Рё РіРѕСЂРѕРґ" />
         </div>
-        <button class="searchBtn" type="button">Найти</button>
+        <button class="searchBtn" type="button">РќР°Р№С‚Рё</button>
       </div>
 
       <div class="filtersLine">
-        <input v-model="filters.specialization" class="miniInput" placeholder="Специализация" />
-        <input v-model="filters.city" class="miniInput" placeholder="Город" />
-        <input v-model="filters.experience" class="miniInput" placeholder="Опыт" />
-        <button class="ghostBtn" type="button" @click="clearAll">Очистить</button>
+        <input v-model="filters.specialization" class="miniInput" placeholder="РЎРїРµС†РёР°Р»РёР·Р°С†РёСЏ" />
+        <input v-model="filters.city" class="miniInput" placeholder="Р“РѕСЂРѕРґ" />
+        <input v-model="filters.experience" class="miniInput" placeholder="РћРїС‹С‚" />
+        <button class="ghostBtn" type="button" @click="clearAll">РћС‡РёСЃС‚РёС‚СЊ</button>
       </div>
     </div>
 
     <PlaceholderPanel
-      badge="Новая страница"
-      title="Здесь будет поиск резюме"
-      description="Я добавил отдельную страницу для работодателя и сделал доступ к ней только после входа с ролью работодателя или администратора. Дальше сюда можно подключить API, фильтры и список найденных резюме."
+      badge="РќРѕРІР°СЏ СЃС‚СЂР°РЅРёС†Р°"
+      title="Р—РґРµСЃСЊ Р±СѓРґРµС‚ РїРѕРёСЃРє СЂРµР·СЋРјРµ"
+      description="РЇ РґРѕР±Р°РІРёР» РѕС‚РґРµР»СЊРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ РґР»СЏ СЂР°Р±РѕС‚РѕРґР°С‚РµР»СЏ Рё СЃРґРµР»Р°Р» РґРѕСЃС‚СѓРї Рє РЅРµР№ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ РІС…РѕРґР° СЃ СЂРѕР»СЊСЋ СЂР°Р±РѕС‚РѕРґР°С‚РµР»СЏ РёР»Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°. Р”Р°Р»СЊС€Рµ СЃСЋРґР° РјРѕР¶РЅРѕ РїРѕРґРєР»СЋС‡РёС‚СЊ API, С„РёР»СЊС‚СЂС‹ Рё СЃРїРёСЃРѕРє РЅР°Р№РґРµРЅРЅС‹С… СЂРµР·СЋРјРµ."
     />
   </DashboardShell>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import DashboardShell from "../components/layouts/DashboardShell.vue";
 import PlaceholderPanel from "../components/layouts/PlaceholderPanel.vue";
 import UiCard from "../components/ui/UiCard.vue";
+import { getUserRoleFromToken, isAdminRole } from "../utils/auth";
 
 const navItems = [
-  { to: "/employer/resumes", label: "Поиск резюме" },
-  { to: "/employer/applications", label: "Отклики" },
-  { to: "/employer/vacancies/create", label: "Создать вакансию" },
-  { to: "/profile", label: "Профиль" },
+  { to: "/home", label: "Р“Р»Р°РІРЅР°СЏ" },
+  { to: "/employer/resumes", label: "РџРѕРёСЃРє СЂРµР·СЋРјРµ" },
+  { to: "/employer/vacancies", label: "РњРѕРё РІР°РєР°РЅСЃРёРё" },
+  { to: "/employer/applications", label: "РћС‚РєР»РёРєРё" },
+  { to: "/employer/vacancies/create", label: "РЎРѕР·РґР°С‚СЊ РІР°РєР°РЅСЃРёСЋ" },
+  { to: "/profile", label: "РџСЂРѕС„РёР»СЊ" },
 ];
 
+const role = getUserRoleFromToken();
+const secondaryAction = computed(() => (
+  isAdminRole(role) ? { to: "/vacancies", label: "РЎС‚СЂР°РЅРёС†Р° РєР°РЅРґРёРґР°С‚Р°" } : null
+));
+
 const query = ref("");
-const filters = reactive({
-  specialization: "",
-  city: "",
-  experience: "",
-});
+const filters = reactive({ specialization: "", city: "", experience: "" });
 
 function clearAll() {
   query.value = "";
@@ -74,18 +78,8 @@ function clearAll() {
   background: rgba(15, 16, 22, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-.searchPanel {
-  display: grid;
-  gap: 12px;
-}
-
-.searchRow {
-  display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: 10px;
-}
-
+.searchPanel { display: grid; gap: 12px; }
+.searchRow { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
 .searchInputWrap {
   height: 46px;
   display: flex;
@@ -96,7 +90,6 @@ function clearAll() {
   background: #0f1016;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .searchInput,
 .miniInput {
   width: 100%;
@@ -107,12 +100,7 @@ function clearAll() {
   outline: none;
   font-size: 16px;
 }
-
-.searchIcon {
-  opacity: 0.7;
-  font-size: 14px;
-}
-
+.searchIcon { opacity: 0.7; font-size: 14px; }
 .searchBtn,
 .ghostBtn {
   height: 46px;
@@ -120,19 +108,12 @@ function clearAll() {
   color: #fff;
   cursor: pointer;
 }
-
 .searchBtn {
   background: #2f73ff;
   border: 1px solid rgba(47, 115, 255, 0.5);
   font-weight: 800;
 }
-
-.filtersLine {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 140px;
-  gap: 10px;
-}
-
+.filtersLine { display: grid; grid-template-columns: 1fr 1fr 1fr 140px; gap: 10px; }
 .miniInput {
   height: 42px;
   padding: 0 12px;
@@ -140,16 +121,9 @@ function clearAll() {
   background: #0f1016;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-.ghostBtn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
+.ghostBtn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.14); }
 @media (max-width: 980px) {
   .searchRow,
-  .filtersLine {
-    grid-template-columns: 1fr;
-  }
+  .filtersLine { grid-template-columns: 1fr; }
 }
 </style>

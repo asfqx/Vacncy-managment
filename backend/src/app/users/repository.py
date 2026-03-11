@@ -1,10 +1,10 @@
-from collections.abc import Callable, Sequence
+﻿from collections.abc import Callable, Sequence
 import datetime as dt
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.users.filter import UserFilterQueryParams
@@ -36,9 +36,17 @@ class UserRepository:
         session: AsyncSession,
     ) -> None:
 
-        user_obj.last_login_at = dt.datetime.now(dt.UTC)
+        stmt = text("UPDATE users SET last_login_at = :last_login_at WHERE uuid = :uuid")
 
+        await session.execute(
+            stmt,
+            {
+                "last_login_at": dt.datetime.now(dt.UTC),
+                "uuid": str(user_obj.uuid),
+            },
+        )
         await session.commit()
+        await session.refresh(user_obj)
 
     @staticmethod
     async def update_password(
@@ -90,9 +98,8 @@ class UserRepository:
         )
 
         result = await session.execute(stmt)
-        users = result.scalars().all()
-        
-        return users
+
+        return result.scalars().all()
 
     @staticmethod
     async def get_without_email(session: AsyncSession) -> Sequence[User]:
@@ -103,9 +110,8 @@ class UserRepository:
         )
 
         result = await session.execute(stmt)
-        users = result.scalars().all()
 
-        return users
+        return result.scalars().all()
 
     @staticmethod
     async def delete(
@@ -165,3 +171,4 @@ class UserRepository:
         await session.refresh(user_obj)
 
         return user_obj
+

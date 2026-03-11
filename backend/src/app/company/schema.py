@@ -29,8 +29,8 @@ class CompanyResponse(BaseModel):
 
     company_size: int 
     website: str 
+    avatar_url: str | None = None
 
     model_config = {
         "from_attributes": True,
     }
-    

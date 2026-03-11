@@ -3,11 +3,11 @@
     :email="email"
     title="Подтверждение email"
     subtitle="Введите код из письма"
-    hint="Если письма нет — проверьте «Спам» или переотправьте код."
+    hint="Если письма нет, проверьте папку Спам или отправьте код повторно."
     token-label="Код из письма"
     confirm-text="Подтвердить"
     :show-resend="true"
-    resend-text="Отправить"
+    resend-text="Отправить снова"
     :cooldown-seconds="60"
     :on-confirm="handleConfirm"
     :on-resend="handleResend"
@@ -29,7 +29,6 @@ const email = computed(() => String(route.query.email || "").trim());
 async function handleConfirm(token) {
   try {
     await authApi.emailConfirmConfirm({ email: email.value, token });
-    // после успеха можно сразу на логин
     setTimeout(() => router.push("/login"), 800);
   } catch (e) {
     const status = e?.response?.status;

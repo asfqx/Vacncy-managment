@@ -1,32 +1,31 @@
-<template>
-    <router-link class="link" :to="`/vacancies/${vacancy.uuid}`">
+﻿<template>
+  <router-link class="link" :to="`/vacancies/${vacancy.uuid}`">
     <article class="card">
-        <div class="top">
+      <div class="top">
         <h3 class="title">{{ vacancy.title }}</h3>
         <span class="badge" :class="{ remote: vacancy.remote }">
-            {{ vacancy.remote ? "Удалённо" : "Офис" }}
+          {{ vacancy.remote ? "Удаленно" : "Офис" }}
         </span>
-        </div>
+      </div>
 
-        <!-- КРУПНАЯ ЗАРПЛАТА -->
-        <p class="salary">
+      <p class="salary">
         {{ formatSalary(vacancy.salary, vacancy.currency) }}
-        </p>
+      </p>
 
-        <p class="meta">
+      <p class="meta">
         <span v-if="vacancy.city">{{ vacancy.city }}</span>
         <span v-else>Город не указан</span>
-        </p>
+      </p>
 
-        <p class="desc">
+      <p class="desc">
         {{ short(vacancy.description) }}
-        </p>
+      </p>
 
-        <div class="bottom">
+      <div class="bottom">
         <span class="muted">{{ formatDate(vacancy.created_at) }}</span>
-        </div>
+      </div>
     </article>
-    </router-link>
+  </router-link>
 </template>
 
 <script setup>
@@ -35,7 +34,7 @@ defineProps({ vacancy: { type: Object, required: true } });
 function short(text) {
   if (!text) return "";
   const t = String(text).replace(/\s+/g, " ").trim();
-  return t.length > 220 ? t.slice(0, 220) + "…" : t;
+  return t.length > 220 ? `${t.slice(0, 220)}...` : t;
 }
 
 function formatSalary(salary, currency) {
@@ -45,9 +44,14 @@ function formatSalary(salary, currency) {
 }
 
 function formatDate(iso) {
-  try { return new Date(iso).toLocaleString("ru-RU"); } catch { return iso; }
+  try {
+    return new Date(iso).toLocaleString("ru-RU");
+  } catch {
+    return iso;
+  }
 }
 </script>
+
 <style scoped>
 .link { text-decoration: none; color: inherit; display: block; }
 .card {
@@ -58,25 +62,17 @@ function formatDate(iso) {
   display: grid;
   gap: 8px;
 }
-
 .link:hover .card {
   transform: translateY(-1px);
   border-color: rgba(255,255,255,0.18);
 }
-
 .top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
-
-.title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.25;
-}
-
+.title { margin: 0; font-size: 18px; line-height: 1.25; }
 .badge {
   font-size: 14px;
   padding: 5px 8px;
@@ -84,18 +80,14 @@ function formatDate(iso) {
   border: 1px solid rgba(255, 255, 255, 0.16);
   opacity: 0.9;
 }
-.badge.remote {
-  border-color: rgba(124, 255, 155, 0.35);
-}
-
+.badge.remote { border-color: rgba(124, 255, 155, 0.35); }
 .salary {
   margin: 0;
-  font-size: 22px;          /* крупнее */
-  font-weight: 500;         /* жирный */
+  font-size: 22px;
+  font-weight: 500;
   letter-spacing: -0.3px;
   color: #ffffff;
 }
-
 .meta {
   margin: 0;
   font-size: 15px;
@@ -104,15 +96,12 @@ function formatDate(iso) {
   gap: 8px;
   align-items: center;
 }
-.dot { opacity: 0.6; }
-
 .desc {
   margin: 0;
   font-size: 15px;
   line-height: 1.45;
   opacity: 0.9;
 }
-
 .bottom {
   display: flex;
   justify-content: right;

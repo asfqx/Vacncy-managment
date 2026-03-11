@@ -1,29 +1,39 @@
 <template>
   <DashboardShell
-    title="Îòêëèêè íà âàêàíñèè"
-    subtitle="Ðàáîòîäàòåëü âèäèò òîëüêî îòêëèêè íà ñâîè âàêàíñèè."
-    role-label="Ðàáîòîäàòåëü"
+    title="ÐžÑ‚ÐºÐ»Ð¸ÐºÐ¸ Ð½Ð° Ð²Ð°ÐºÐ°Ð½ÑÐ¸Ð¸"
+    subtitle="Ð Ð°Ð±Ð¾Ñ‚Ð¾Ð´Ð°Ñ‚ÐµÐ»ÑŒ Ð²Ð¸Ð´Ð¸Ñ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¾Ñ‚ÐºÐ»Ð¸ÐºÐ¸ Ð½Ð° ÑÐ²Ð¾Ð¸ Ð²Ð°ÐºÐ°Ð½ÑÐ¸Ð¸."
+    role-label="Ð Ð°Ð±Ð¾Ñ‚Ð¾Ð´Ð°Ñ‚ÐµÐ»ÑŒ"
     :nav-items="navItems"
-    :primary-action="{ to: '/employer/vacancies/create', label: 'Ñîçäàòü âàêàíñèþ' }"
-    home-path="/employer/resumes"
-    avatar-letter="Ð"
+    :primary-action="{ to: '/employer/vacancies/create', label: 'Ð¡Ð¾Ð·Ð´Ð°Ñ‚ÑŒ Ð²Ð°ÐºÐ°Ð½ÑÐ¸ÑŽ' }"
+    :secondary-action="secondaryAction"
+    home-path="/home"
+    avatar-letter="Ð "
   >
     <PlaceholderPanel
-      badge="Ðàáîòîäàòåëü"
-      title="Ðàçäåë îòêëèêîâ ðàáîòîäàòåëÿ"
-      description="Ñòðàíèöà çàêðûòà äëÿ êàíäèäàòîâ è ãîòîâà äëÿ âûâîäà îòêëèêîâ ïî âàêàíñèÿì êîìïàíèè."
+      badge="Ð Ð°Ð±Ð¾Ñ‚Ð¾Ð´Ð°Ñ‚ÐµÐ»ÑŒ"
+      title="Ð Ð°Ð·Ð´ÐµÐ» Ð¾Ñ‚ÐºÐ»Ð¸ÐºÐ¾Ð² Ñ€Ð°Ð±Ð¾Ñ‚Ð¾Ð´Ð°Ñ‚ÐµÐ»Ñ"
+      description="Ð¡Ñ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° Ð·Ð°ÐºÑ€Ñ‹Ñ‚Ð° Ð´Ð»Ñ ÐºÐ°Ð½Ð´Ð¸Ð´Ð°Ñ‚Ð¾Ð² Ð¸ Ð³Ð¾Ñ‚Ð¾Ð²Ð° Ð´Ð»Ñ Ð²Ñ‹Ð²Ð¾Ð´Ð° Ð¾Ñ‚ÐºÐ»Ð¸ÐºÐ¾Ð² Ð¿Ð¾ Ð²Ð°ÐºÐ°Ð½ÑÐ¸ÑÐ¼ ÐºÐ¾Ð¼Ð¿Ð°Ð½Ð¸Ð¸."
     />
   </DashboardShell>
 </template>
 
 <script setup>
+import { computed } from "vue";
 import DashboardShell from "../components/layouts/DashboardShell.vue";
 import PlaceholderPanel from "../components/layouts/PlaceholderPanel.vue";
+import { getUserRoleFromToken, isAdminRole } from "../utils/auth";
 
 const navItems = [
-  { to: "/employer/resumes", label: "Ïîèñê ðåçþìå" },
-  { to: "/employer/applications", label: "Îòêëèêè" },
-  { to: "/employer/vacancies/create", label: "Ñîçäàòü âàêàíñèþ" },
-  { to: "/profile", label: "Ïðîôèëü" },
+  { to: "/home", label: "Ð“Ð»Ð°Ð²Ð½Ð°Ñ" },
+  { to: "/employer/resumes", label: "ÐŸÐ¾Ð¸ÑÐº Ñ€ÐµÐ·ÑŽÐ¼Ðµ" },
+  { to: "/employer/vacancies", label: "ÐœÐ¾Ð¸ Ð²Ð°ÐºÐ°Ð½ÑÐ¸Ð¸" },
+  { to: "/employer/applications", label: "ÐžÑ‚ÐºÐ»Ð¸ÐºÐ¸" },
+  { to: "/employer/vacancies/create", label: "Ð¡Ð¾Ð·Ð´Ð°Ñ‚ÑŒ Ð²Ð°ÐºÐ°Ð½ÑÐ¸ÑŽ" },
+  { to: "/profile", label: "ÐŸÑ€Ð¾Ñ„Ð¸Ð»ÑŒ" },
 ];
+
+const role = getUserRoleFromToken();
+const secondaryAction = computed(() => (
+  isAdminRole(role) ? { to: "/vacancies", label: "Ð¡Ñ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° ÐºÐ°Ð½Ð´Ð¸Ð´Ð°Ñ‚Ð°" } : null
+));
 </script>

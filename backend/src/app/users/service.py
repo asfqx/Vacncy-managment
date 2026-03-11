@@ -42,13 +42,6 @@ class UserService:
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
-        
-        if new_bio.email and new_bio.email == current_user.email:
-
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email уже используется",
-            )
 
         exist_user = await UserRepository.get(current_user.uuid, session)
 
@@ -57,6 +50,20 @@ class UserService:
                 status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
             )
+
+        if new_bio.email:
+            normalized_email = new_bio.email.lower()
+
+            if normalized_email != exist_user.email:
+                user_with_same_email = await UserRepository.get_by_login(normalized_email, session)
+
+                if user_with_same_email and user_with_same_email.uuid != exist_user.uuid:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Email уже используется",
+                    )
+
+                new_bio.email = normalized_email
 
         if new_bio.avatar_url:
             exists = s3_adapter.is_exists(AVATARS_BUCKET, new_bio.avatar_url)
@@ -69,13 +76,12 @@ class UserService:
 
         updated_data = await UserRepository.update(exist_user, new_bio, session)
 
-        ret: dict[str, Any] = {
+        return {
             "username": updated_data.username,
             "email": updated_data.email,
+            "fio": updated_data.fio,
             "avatar_url": updated_data.avatar_url,
         }
-
-        return ret
 
     @staticmethod
     @handle_model_errors

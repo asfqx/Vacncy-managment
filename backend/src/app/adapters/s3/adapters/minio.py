@@ -30,10 +30,32 @@ class MinioAdapter(BaseS3StorageAdapter):
         try:
             if not self.client.bucket_exists(bucket_name):
                 self.client.make_bucket(bucket_name)
+
+            if bucket_name == "avatars":
+                self.client.set_bucket_policy(
+                    bucket_name,
+                    """
+                    {
+                      \"Version\": \"2012-10-17\",
+                      \"Statement\": [
+                        {
+                          \"Effect\": \"Allow\",
+                          \"Principal\": {\"AWS\": [\"*\"]},
+                          \"Action\": [\"s3:GetBucketLocation\", \"s3:ListBucket\"],
+                          \"Resource\": [\"arn:aws:s3:::avatars\"]
+                        },
+                        {
+                          \"Effect\": \"Allow\",
+                          \"Principal\": {\"AWS\": [\"*\"]},
+                          \"Action\": [\"s3:GetObject\"],
+                          \"Resource\": [\"arn:aws:s3:::avatars/*\"]
+                        }
+                      ]
+                    }
+                    """.strip(),
+                )
         except S3Error as err:
-            if err.code in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists"):
-                pass  # safe to ignore
-            else:
+            if err.code not in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists"):
                 raise
 
     def is_exists(self, bucket_name: str, object_name: str) -> bool:

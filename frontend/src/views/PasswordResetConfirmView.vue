@@ -8,7 +8,7 @@
     token-label="Код из письма"
     confirm-text="Продолжить"
     :show-resend="true"
-    resend-text="Отправить"
+    resend-text="Отправить снова"
     :cooldown-seconds="60"
     :on-confirm="handleTokenSubmit"
     :on-resend="handleResend"
@@ -19,7 +19,7 @@
   <AuthCard
     v-else
     title="Новый пароль"
-    subtitle="Введите новый пароль для вашего аккаунта"
+    subtitle="Введите новый пароль для входа в аккаунт"
   >
     <form class="form" @submit.prevent="submitNewPassword">
       <BaseInput
@@ -65,30 +65,24 @@ import { authApi } from "../api/auth";
 
 const route = useRoute();
 const router = useRouter();
-
 const email = computed(() => String(route.query.email || "").trim());
 
 const step = ref(1);
 const savedToken = ref("");
-
 const newPassword = ref("");
 const newPassword2 = ref("");
 const pwdLoading = ref(false);
 const pwdError = ref("");
 const pwdSuccess = ref("");
-
-const fieldErrors = reactive({
-  newPassword: "",
-  newPassword2: "",
-});
+const fieldErrors = reactive({ newPassword: "", newPassword2: "" });
 
 async function handleTokenSubmit(token) {
   savedToken.value = token;
+  pwdError.value = "";
   step.value = 2;
 }
 
 async function handleResend() {
-  if (!email.value) throw new Error("Email не указан.");
   try {
     await authApi.passwordResetRequest(email.value);
   } catch (e) {
@@ -98,84 +92,68 @@ async function handleResend() {
   }
 }
 
-function backToToken() {
-  pwdError.value = "";
-  pwdSuccess.value = "";
-  step.value = 1;
-}
-
-function validatePasswords() {
+function validatePassword() {
   fieldErrors.newPassword = "";
   fieldErrors.newPassword2 = "";
   pwdError.value = "";
   pwdSuccess.value = "";
 
-  if (!newPassword.value || newPassword.value.length < 8) {
-    fieldErrors.newPassword = "Минимум 8 символов";
+  if (!savedToken.value) {
+    pwdError.value = "Сначала введите код.";
+    step.value = 1;
+    return false;
   }
-  if (!newPassword2.value) {
-    fieldErrors.newPassword2 = "Повторите пароль";
-  } else if (newPassword2.value !== newPassword.value) {
-    fieldErrors.newPassword2 = "Пароли не совпадают";
-  }
+
+  if (!newPassword.value) fieldErrors.newPassword = "Введите новый пароль";
+  else if (newPassword.value.length < 8) fieldErrors.newPassword = "Минимум 8 символов";
+
+  if (!newPassword2.value) fieldErrors.newPassword2 = "Повторите пароль";
+  else if (newPassword2.value !== newPassword.value) fieldErrors.newPassword2 = "Пароли не совпадают";
 
   return !fieldErrors.newPassword && !fieldErrors.newPassword2;
 }
 
 async function submitNewPassword() {
-  if (!email.value) {
-    pwdError.value = "Email не указан.";
-    return;
-  }
-  if (!savedToken.value) {
-    pwdError.value = "Сначала введите код.";
-    step.value = 1;
-    return;
-  }
-  if (!validatePasswords()) return;
+  if (!validatePassword()) return;
 
   pwdLoading.value = true;
   try {
-    // Swagger: token -> query, body -> { email, new_password }
     await authApi.passwordResetConfirm({
       email: email.value,
       token: savedToken.value,
       new_password: newPassword.value,
     });
-
-    pwdSuccess.value = "Пароль обновлён. Теперь можно войти.";
+    pwdSuccess.value = "Пароль успешно обновлен. Сейчас откроется вход.";
     setTimeout(() => router.push("/login"), 900);
   } catch (e) {
     const status = e?.response?.status;
     if (status === 400) pwdError.value = "Неверный или просроченный код";
-    else if (status === 404) pwdError.value = "Пользователь не найден";
-    else if (status === 422) pwdError.value = "Ошибка валидации";
-    else pwdError.value = "Ошибка сервера или сети";
+    else if (status === 422) pwdError.value = "Проверьте корректность нового пароля";
+    else pwdError.value = "Не удалось сменить пароль";
   } finally {
     pwdLoading.value = false;
   }
+}
+
+function backToToken() {
+  pwdError.value = "";
+  pwdSuccess.value = "";
+  step.value = 1;
 }
 </script>
 
 <style scoped>
 .form { display: grid; gap: 12px; }
-.success { margin: 6px 0 0; color: #7CFF9B; font-size: 15px; }
+.success { margin: 6px 0 0; color: #7cff9b; font-size: 15px; }
 .error { margin: 6px 0 0; color: #ff6b6b; font-size: 15px; }
-
-.hint-center {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 15px;
-  color: rgba(232,232,232,0.75);
-}
-
+.hint-center { margin-top: 10px; text-align: center; }
 .link-btn {
-  background: transparent;
   border: none;
+  background: transparent;
   color: #ffffff;
   cursor: pointer;
-  padding: 0;
   border-bottom: 1px solid rgba(255,255,255,0.35);
+  padding: 0;
 }
 .link-btn:hover { border-bottom-color: rgba(255,255,255,0.9); }
 </style>

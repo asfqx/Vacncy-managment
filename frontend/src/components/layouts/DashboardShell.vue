@@ -18,16 +18,21 @@
       </div>
 
       <div class="topbar__right">
+        <RouterLink v-if="secondaryAction" class="ghostAction" :to="secondaryAction.to">
+          {{ secondaryAction.label }}
+        </RouterLink>
+
         <RouterLink v-if="primaryAction" class="pill" :to="primaryAction.to">
           {{ primaryAction.label }}
         </RouterLink>
 
         <RouterLink class="avatar" :to="profilePath">
-          {{ avatarLetterValue }}
+          <img v-if="avatarImageSrc" :src="avatarImageSrc" alt="Аватар" class="avatar__image" />
+          <span v-else>{{ avatarLetterValue }}</span>
         </RouterLink>
 
         <button class="logout" type="button" @click="onLogout">
-          �����
+          Выйти
         </button>
       </div>
     </header>
@@ -51,8 +56,9 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
+import { usersApi } from "../../api/users";
 import { useAuth } from "../../composables/useAuth";
 
 const props = defineProps({
@@ -64,6 +70,10 @@ const props = defineProps({
     default: () => [],
   },
   primaryAction: {
+    type: Object,
+    default: null,
+  },
+  secondaryAction: {
     type: Object,
     default: null,
   },
@@ -84,13 +94,39 @@ const props = defineProps({
 const route = useRoute();
 const router = useRouter();
 const { logout } = useAuth();
+const profile = ref(null);
 
-const avatarLetterValue = computed(() => String(props.avatarLetter || "U").slice(0, 1).toUpperCase());
+const avatarLetterValue = computed(() => {
+  const usernameLetter = String(profile.value?.username || "").trim().slice(0, 1);
+  return (usernameLetter || String(props.avatarLetter || "U").slice(0, 1)).toUpperCase();
+});
+
+const avatarImageSrc = computed(() => buildAvatarUrl(profile.value?.avatar_url));
+
+function buildAvatarUrl(objectName) {
+  if (!objectName) return "";
+  const baseUrl = (import.meta.env.VITE_S3_PUBLIC_BASE_URL || "http://localhost:9000").replace(/\/$/, "");
+  const normalizedPath = String(objectName)
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `${baseUrl}/avatars/${normalizedPath}`;
+}
+
+async function loadProfile() {
+  try {
+    profile.value = await usersApi.getMe();
+  } catch {
+    profile.value = null;
+  }
+}
 
 async function onLogout() {
   await logout();
   await router.push("/login");
 }
+
+onMounted(loadProfile);
 </script>
 
 <style scoped>
@@ -102,7 +138,6 @@ async function onLogout() {
     #0b0c10;
   color: #eaeaf0;
 }
-
 .topbar {
   position: sticky;
   top: 0;
@@ -117,14 +152,8 @@ async function onLogout() {
   gap: 12px;
   padding: 12px 20px;
 }
-
 .topbar__left,
-.topbar__right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
+.topbar__right { display: flex; align-items: center; gap: 12px; }
 .logo {
   width: 36px;
   height: 36px;
@@ -137,13 +166,7 @@ async function onLogout() {
   font-weight: 900;
   text-transform: uppercase;
 }
-
-.nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
+.nav { display: flex; flex-wrap: wrap; gap: 8px; }
 .nav__item {
   padding: 10px 12px;
   border-radius: 12px;
@@ -151,14 +174,10 @@ async function onLogout() {
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
 }
-
 .nav__item:hover,
-.nav__item.is-active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-}
-
+.nav__item.is-active { color: #fff; background: rgba(255, 255, 255, 0.08); }
 .pill,
+.ghostAction,
 .logout,
 .avatar {
   border-radius: 999px;
@@ -166,28 +185,23 @@ async function onLogout() {
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
 }
-
-.pill {
-  padding: 10px 14px;
-  background: #2f73ff;
-}
-
+.pill { padding: 10px 14px; background: #2f73ff; }
+.ghostAction { padding: 10px 14px; background: transparent; }
 .avatar {
   width: 38px;
   height: 38px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
   font-weight: 800;
 }
-
-.logout {
-  height: 38px;
-  padding: 0 14px;
-  background: transparent;
-  cursor: pointer;
+.avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-
+.logout { height: 38px; padding: 0 14px; background: transparent; cursor: pointer; }
 .layout {
   max-width: 1240px;
   margin: 0 auto;
@@ -196,21 +210,14 @@ async function onLogout() {
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 20px;
 }
-
 .left,
-.right {
-  display: grid;
-  gap: 14px;
-  align-content: start;
-}
-
+.right { display: grid; gap: 14px; align-content: start; }
 .summaryCard {
   padding: 18px;
   border-radius: 22px;
   background: linear-gradient(180deg, rgba(22, 24, 34, 0.96), rgba(12, 13, 18, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .summaryCard__label {
   display: inline-flex;
   margin-bottom: 12px;
@@ -221,33 +228,16 @@ async function onLogout() {
   font-size: 13px;
   font-weight: 700;
 }
-
-.summaryCard__title {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.15;
-}
-
+.summaryCard__title { margin: 0; font-size: 28px; line-height: 1.15; }
 .summaryCard__text {
   margin: 12px 0 0;
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.5;
 }
-
 @media (max-width: 980px) {
-  .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
+  .topbar { align-items: flex-start; flex-direction: column; }
   .topbar__left,
-  .topbar__right {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .layout {
-    grid-template-columns: 1fr;
-  }
+  .topbar__right { width: 100%; flex-wrap: wrap; }
+  .layout { grid-template-columns: 1fr; }
 }
 </style>

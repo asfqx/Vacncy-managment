@@ -1,24 +1,24 @@
 <template>
   <div class="page">
+    <div class="pageGlow pageGlow--blue"></div>
+    <div class="pageGlow pageGlow--coral"></div>
+
     <header class="header">
-      <button class="ghost" type="button" @click="goBack">← Назад</button>
+      <button class="ghost" type="button" @click="goBack">Назад</button>
     </header>
 
-    <InlineLoader v-if="loading" text="Загружаем вакансию…" />
+    <InlineLoader v-if="loading" text="Загружаем вакансию..." />
     <p v-else-if="error" class="error">{{ error }}</p>
 
     <div v-else class="layout">
-
-      <!-- LEFT COLUMN -->
       <div class="left">
-
-        <!-- VACANCY HEADER -->
         <section class="panel vacancyHeader">
+          <p class="eyebrow">Вакансия</p>
           <h1 class="title">{{ vacancy.title }}</h1>
 
           <div class="row">
             <span class="badge" :class="{ remote: vacancy.remote }">
-              {{ vacancy.remote ? "Удалённо" : "Офис" }}
+              {{ vacancy.remote ? "Удаленно" : "Офис / гибрид" }}
             </span>
 
             <span class="salary">
@@ -32,113 +32,100 @@
             <span class="muted">Статус: {{ vacancy.status }}</span>
           </p>
 
-          <button class="applyBtn">
-            Откликнуться
-          </button>
-
-          <p class="muted small">
-            Обновлено: {{ formatDate(vacancy.updated_at) }}
-          </p>
+          <div class="actionRow">
+            <button v-if="canApply" class="applyBtn">Откликнуться</button>
+            <p class="muted small">Обновлено: {{ formatDate(vacancy.updated_at) }}</p>
+          </div>
         </section>
 
-        <!-- VACANCY DESCRIPTION -->
         <section class="panel">
-          <h2 class="h2">Описание вакансии</h2>
-
+          <p class="eyebrow">Описание</p>
+          <h2 class="h2">Что предстоит делать</h2>
           <p class="text">
             {{ vacancy.description || "Описание отсутствует." }}
           </p>
         </section>
-
       </div>
 
-
-      <!-- RIGHT COLUMN -->
       <aside class="right">
-
         <section class="panel companyPanel">
+          <p class="eyebrow">Компания</p>
+          <h2 class="h2">Кто нанимает</h2>
 
-          <h2 class="h2">Компания</h2>
-
-          <InlineLoader
-            v-if="companyLoading"
-            text="Загружаем компанию…"
-          />
-
-          <p v-else-if="companyError" class="error">
-            {{ companyError }}
-          </p>
+          <InlineLoader v-if="companyLoading" text="Загружаем компанию..." />
+          <p v-else-if="companyError" class="error">{{ companyError }}</p>
 
           <div v-else>
-
-            <div class="companyTitle">
-              {{ company.title }}
+            <div class="companyHead">
+              <img v-if="companyAvatarSrc" :src="companyAvatarSrc" alt="Аватар компании" class="companyAvatarImage" />
+              <div v-else class="companyAvatarFallback">{{ companyAvatarLetter }}</div>
+              <div class="companyTitleWrap">
+                <div class="companyTitle">{{ company.title }}</div>
+              </div>
             </div>
 
             <div class="companySite" v-if="company.website">
-              <a
-                class="link"
-                :href="company.website"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a class="link" :href="company.website" target="_blank" rel="noreferrer">
                 {{ company.website }}
               </a>
             </div>
 
             <div class="muted small">
-              Размер:
-              {{
-                company.company_size
-                  ? company.company_size + " сотрудников"
-                  : "не указан"
-              }}
+              Размер команды: {{ company.company_size ? `${company.company_size} сотрудников` : "не указан" }}
             </div>
 
             <div class="divider"></div>
 
-            <div class="block">
+            <div class="infoTile">
               <h3 class="h3">О компании</h3>
               <p class="text">
                 {{ company.description || "Описание компании отсутствует." }}
               </p>
             </div>
-
           </div>
-
         </section>
-
       </aside>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import InlineLoader from "../components/ui/InlineLoader.vue";
 import { vacanciesApi } from "../api/vacancies";
 import { companyApi } from "../api/company";
+import { getUserRoleFromToken, isCandidateRole } from "../utils/auth";
 
 const route = useRoute();
 const router = useRouter();
-
 const loading = ref(true);
 const error = ref("");
-
 const vacancy = ref(null);
-
 const companyLoading = ref(false);
 const companyError = ref("");
 const company = ref(null);
+const role = getUserRoleFromToken();
+const canApply = computed(() => isCandidateRole(role));
+const companyAvatarSrc = computed(() => buildAvatarUrl(company.value?.avatar_url));
+const companyAvatarLetter = computed(() => String(company.value?.title || "К").trim().slice(0, 1).toUpperCase());
+
+function buildAvatarUrl(objectName) {
+  if (!objectName) return "";
+  const baseUrl = (import.meta.env.VITE_S3_PUBLIC_BASE_URL || "http://localhost:9000").replace(/\/$/, "");
+  const normalizedPath = String(objectName)
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `${baseUrl}/avatars/${normalizedPath}`;
+}
 
 function goBack() {
   router.back();
 }
 
 function formatSalary(salary, currency) {
-  if (!salary) return "З/п не указана";
+  if (!salary) return "Зарплата не указана";
   const cur = currency || "RUB";
   return `${salary.toLocaleString("ru-RU")} ${cur}`;
 }
@@ -159,10 +146,8 @@ async function loadCompany(companyId) {
     company.value = await companyApi.getById(companyId);
   } catch (e) {
     const status = e?.response?.status;
-
     if (status === 404) companyError.value = "Компания не найдена";
     else companyError.value = "Не удалось загрузить данные компании";
-
     company.value = null;
   } finally {
     companyLoading.value = false;
@@ -178,7 +163,6 @@ async function loadVacancy() {
 
   try {
     const data = await vacanciesApi.getById(uuid);
-
     vacancy.value = data;
 
     if (data?.company_id) {
@@ -191,14 +175,11 @@ async function loadVacancy() {
         company_size: 0,
       };
     }
-
   } catch (e) {
     const status = e?.response?.status;
-
     if (status === 404) error.value = "Вакансия не найдена";
     else if (status === 401) error.value = "Вы не авторизованы";
     else error.value = "Не удалось загрузить вакансию";
-
   } finally {
     loading.value = false;
   }
@@ -210,184 +191,142 @@ onMounted(loadVacancy);
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #0b0c10;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(47, 115, 255, 0.2), transparent 24%),
+    radial-gradient(circle at top right, rgba(255, 122, 89, 0.14), transparent 20%),
+    #0b0c10;
   color: #eaeaf0;
-  padding: 18px 14px 28px;
+  padding: 18px 14px 32px;
+}
+.pageGlow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(80px);
+  opacity: 0.32;
+  pointer-events: none;
+}
+.pageGlow--blue {
+  width: 260px;
+  height: 260px;
+  left: -60px;
+  top: 20px;
+  background: rgba(47, 115, 255, 0.28);
+}
+.pageGlow--coral {
+  width: 220px;
+  height: 220px;
+  right: -40px;
+  bottom: 30px;
+  background: rgba(255, 122, 89, 0.18);
+}
+.header,
+.layout {
+  position: relative;
+  z-index: 1;
   max-width: 1180px;
   margin: 0 auto;
 }
-
-.header {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 12px;
-}
-
+.header { display: flex; justify-content: flex-start; margin-bottom: 14px; }
 .ghost {
-  height: 40px;
-  border-radius: 12px;
-  padding: 0 12px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.9);
+  min-height: 42px;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.92);
   font-weight: 700;
   cursor: pointer;
 }
-
 .layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
+  gap: 18px;
   align-items: start;
 }
-
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.left {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.right {
-  position: sticky;
-  top: 20px;
-}
-
+.left { display: grid; gap: 16px; }
+.right { position: sticky; top: 20px; }
 .panel {
-  background: rgba(15, 16, 22, 0.92);
+  background: linear-gradient(180deg, rgba(18, 19, 27, 0.96), rgba(11, 12, 17, 0.98));
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 24px;
+  padding: 22px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.24);
 }
-
-.title {
+.eyebrow {
   margin: 0;
-  font-size: 24px;
-  line-height: 1.2;
+  color: #8eb4ff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.salary {
-  font-size: 22px;
-  font-weight: 900;
-}
-
+.title { margin: 0; font-size: 34px; line-height: 1.08; }
+.row,
+.actionRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.salary { font-size: 26px; font-weight: 800; }
 .badge {
-  font-size: 14px;
-  padding: 5px 8px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.04);
 }
-
-.badge.remote {
-  border-color: rgba(124,255,155,0.35);
+.badge.remote { border-color: rgba(124,255,155,0.35); color: #9ff0b8; }
+.meta { margin: 0; font-size: 15px; opacity: 0.82; display: flex; gap: 8px; align-items: center; }
+.dot { opacity: 0.6; }
+.h2 { margin: 0; font-size: 24px; }
+.h3 { margin: 0; font-size: 16px; }
+.text { margin: 0; font-size: 15px; line-height: 1.7; opacity: 0.92; white-space: pre-wrap; }
+.companyHead { display: flex; align-items: center; gap: 14px; }
+.companyAvatarImage,
+.companyAvatarFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
 }
-
-.meta {
-  font-size: 15px;
-  opacity: 0.8;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.dot {
-  opacity: 0.6;
-}
-
-.block {
-  margin-top: 6px;
+.companyAvatarImage { object-fit: cover; border: 1px solid rgba(255,255,255,0.12); }
+.companyAvatarFallback {
   display: grid;
-  gap: 6px;
+  place-items: center;
+  background: linear-gradient(135deg, #ff7a59, #2f73ff);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
 }
-
-.h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.h3 {
-  margin: 0;
-  font-size: 16px;
-  opacity: 0.9;
-}
-
-.text {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.55;
-  opacity: 0.92;
-  white-space: pre-wrap;
-}
-
-.companyTitle {
-  font-weight: 900;
-  font-size: 18px;
-}
-
-.companySite {
-  margin-top: 4px;
-}
-
-.link {
-  color: rgba(47,115,255,0.95);
-  text-decoration: none;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.small {
-  font-size: 14px;
-}
-
-.muted {
-  opacity: 0.65;
-}
-
+.companyTitleWrap { display: grid; gap: 4px; }
+.companyTitle { font-weight: 800; font-size: 22px; }
+.companySite { margin-top: 2px; }
+.link { color: #9ac0ff; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.small { font-size: 14px; }
+.muted { opacity: 0.68; }
 .applyBtn {
-  margin-top: 10px;
-  height: 44px;
-  border-radius: 12px;
-  border: none;
-  background: rgba(47,115,255,0.95);
-  color: white;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(47,115,255,0.38);
+  background: linear-gradient(135deg, #2f73ff, #5a93ff);
+  color: #fff;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(47,115,255,0.22);
 }
-
-.applyBtn:hover {
-  background: rgba(47,115,255,1);
+.companyPanel { gap: 16px; }
+.divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0 4px; }
+.infoTile { padding: 4px 0 0; display: grid; gap: 10px; }
+.error { color: #ff7d7d; font-size: 15px; margin: 0 auto; max-width: 1180px; position: relative; z-index: 1; }
+@media (max-width: 920px) {
+  .layout { grid-template-columns: 1fr; }
+  .right { position: static; }
 }
-
-.companyPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.divider {
-  height: 1px;
-  background: rgba(255,255,255,0.08);
-  margin: 6px 0;
-}
-
-.error {
-  color: #ff6b6b;
-  font-size: 15px;
-  margin: 0;
+@media (max-width: 640px) {
+  .row,
+  .actionRow { flex-direction: column; align-items: flex-start; }
+  .title { font-size: 28px; }
 }
 </style>

@@ -1,0 +1,70 @@
+﻿:root {
+  --control-bg: rgba(8, 10, 16, 0.96);
+  --control-border: rgba(255, 255, 255, 0.08);
+  --control-border-focus: rgba(47, 115, 255, 0.6);
+  --control-shadow-focus: 0 0 0 4px rgba(47, 115, 255, 0.14);
+  --control-text: #eef2ff;
+  --control-muted: rgba(255, 255, 255, 0.55);
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--control-muted);
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+select,
+.app-select {
+  color: var(--control-text);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-radius: 16px;
+  border: 1px solid var(--control-border);
+  background-color: var(--control-bg);
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%), linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% - 3px), calc(100% - 14px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+select:focus,
+.app-select:focus {
+  border-color: var(--control-border-focus);
+  box-shadow: var(--control-shadow-focus);
+  outline: none;
+}
+
+select:hover,
+.app-select:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+select:disabled,
+.app-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+select option,
+.app-select option {
+  background-color: #11131a;
+  color: #eef2ff;
+}

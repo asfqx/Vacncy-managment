@@ -40,6 +40,10 @@ export function getUserRoleFromToken(token = getAccessToken()) {
   return normalizeRole(parseJwtPayload(token)?.role);
 }
 
+export function isAdminRole(role) {
+  return normalizeRole(role) === USER_ROLES.ADMIN;
+}
+
 export function isEmployerRole(role) {
   const normalizedRole = normalizeRole(role);
   return normalizedRole === USER_ROLES.COMPANY || normalizedRole === USER_ROLES.ADMIN;
@@ -50,13 +54,13 @@ export function isCandidateRole(role) {
 }
 
 export function getDefaultRouteForRole(role) {
-  if (isEmployerRole(role)) return "/employer/resumes";
-  if (isCandidateRole(role)) return "/vacancies";
+  if (isEmployerRole(role) || isCandidateRole(role)) return "/home";
   return "/login";
 }
 
 export function getRoleLabel(role) {
-  if (isEmployerRole(role)) return "Работодатель";
-  if (isCandidateRole(role)) return "Кандидат";
-  return "Пользователь";
+  if (isAdminRole(role)) return "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ";
+  if (isEmployerRole(role)) return "Р Р°Р±РѕС‚РѕРґР°С‚РµР»СЊ";
+  if (isCandidateRole(role)) return "РљР°РЅРґРёРґР°С‚";
+  return "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ";
 }

@@ -1,13 +1,12 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export const http = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // нужно если refresh_token в cookie
+  withCredentials: true,
 });
 
-// attach access token
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -21,15 +20,13 @@ function resolveQueue(newToken) {
   queue.forEach((p) => p.resolve(newToken));
   queue = [];
 }
+
 function rejectQueue(err) {
   queue.forEach((p) => p.reject(err));
   queue = [];
 }
 
 async function doRefresh() {
-  // refresh_token у тебя есть в ответе login (и на скрине).
-  // Если refresh на бэке реально из cookie — body может быть не нужен,
-  // но по Swagger он допустим, так что отправляем.
   const refreshToken = localStorage.getItem("refresh_token");
 
   const res = await axios.post(
