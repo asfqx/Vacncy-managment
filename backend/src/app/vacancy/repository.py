@@ -1,9 +1,9 @@
-from collections.abc import Callable, Sequence
+﻿from collections.abc import Callable, Sequence
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import select, desc, func
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enum import VacancyStatus
@@ -13,10 +13,22 @@ from .model import Vacancy
 
 
 class VacancyRepository:
+    GENERIC_TERMS = {
+        "разработчик",
+        "developer",
+        "dev",
+        "engineer",
+        "senior",
+        "middle",
+        "junior",
+        "intern",
+        "lead",
+        "специалист",
+        "программист",
+    }
 
     @staticmethod
     def _build_conditions(filters: dict[str, Any]) -> list[Any]:
-
         filter_mapping: dict[str, Callable[[Any], Any]] = {
             "city": lambda v: Vacancy.city.ilike(f"%{v}%"),
             "company_id": lambda v: Vacancy.company_id == v,
@@ -27,53 +39,65 @@ class VacancyRepository:
             "cursor": lambda v: Vacancy.created_at < v,
         }
 
-        return [
-            filter_mapping[k](v)
-            for k, v in filters.items()
-            if k in filter_mapping and v is not None
-        ]
-        
+        conditions: list[Any] = []
+
+        for k, v in filters.items():
+            if k not in filter_mapping or v is None:
+                continue
+
+            condition = filter_mapping[k](v)
+            if condition is not None:
+                conditions.append(condition)
+
+        return conditions
+
+    @staticmethod
+    def _focused_query(raw_query: str) -> str:
+        tokens = [token.strip().lower() for token in raw_query.split() if token.strip()]
+        focused_tokens = [token for token in tokens if token not in VacancyRepository.GENERIC_TERMS]
+        return " ".join(focused_tokens) or raw_query.strip()
+
     @staticmethod
     async def get(
         vacancy_uuid: UUID,
         session: AsyncSession,
     ) -> Vacancy | None:
-
         stmt = select(Vacancy).where(Vacancy.uuid == vacancy_uuid)
-
         result = await session.execute(stmt)
-
         return result.scalar_one_or_none()
-    
+
     @staticmethod
     async def get_by_title(
         vacancy_title: str,
         session: AsyncSession,
     ) -> Vacancy | None:
-
         stmt = select(Vacancy).where(Vacancy.title == vacancy_title)
-
         result = await session.execute(stmt)
-
         return result.scalar_one_or_none()
-    
+
+    @staticmethod
+    async def get_by_company(
+        company_uuid: UUID,
+        session: AsyncSession,
+    ) -> Sequence[Vacancy]:
+        stmt = select(Vacancy).where(Vacancy.company_id == company_uuid)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
     @staticmethod
     async def get_all(
         filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
-        
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions = VacancyRepository._build_conditions(stmt_filters)
 
-        stmt = (
-            select(Vacancy)
-            .where(*conditions)
-            .limit(filters.limit + 1 if filters.limit else 51)
-        )
+        stmt = select(Vacancy).where(*conditions)
+
+        if filters.limit:
+            stmt = stmt.limit(filters.limit + 1)
 
         result = await session.execute(stmt)
-
         return result.scalars().all()
 
     @staticmethod
@@ -82,34 +106,53 @@ class VacancyRepository:
         filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
-
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions = VacancyRepository._build_conditions(stmt_filters)
-        
-        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(vacancy_name))
-        tsq_en = func.websearch_to_tsquery("english", func.unaccent(vacancy_name))
+
+        raw_query = vacancy_name.strip()
+        focused_query = VacancyRepository._focused_query(raw_query)
+
+        normalized_query = func.lower(func.unaccent(raw_query))
+        normalized_focused_query = func.lower(func.unaccent(focused_query))
+        title_text = func.lower(func.unaccent(Vacancy.title))
+
+        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(raw_query))
+        tsq_en = func.websearch_to_tsquery("english", func.unaccent(raw_query))
+        focused_tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(focused_query))
+        focused_tsq_en = func.websearch_to_tsquery("english", func.unaccent(focused_query))
 
         rank_ru = func.ts_rank_cd(Vacancy.search_vector, tsq_ru)
         rank_en = func.ts_rank_cd(Vacancy.search_vector, tsq_en)
+        focused_rank_ru = func.ts_rank_cd(Vacancy.search_vector, focused_tsq_ru)
+        focused_rank_en = func.ts_rank_cd(Vacancy.search_vector, focused_tsq_en)
+        rank_trgm_title = func.similarity(title_text, normalized_query)
+        focused_rank_trgm_title = func.similarity(title_text, normalized_focused_query)
 
-        rank_trgm = func.similarity(Vacancy.title, vacancy_name)
-
-        score = (func.greatest(rank_ru, rank_en) + (rank_trgm * 0.15)).label("score")
+        score = (
+            func.greatest(rank_ru, rank_en) * 0.35
+            + func.greatest(focused_rank_ru, focused_rank_en) * 1.15
+            + (rank_trgm_title * 0.2)
+            + (focused_rank_trgm_title * 0.7)
+        ).label("score")
 
         stmt = (
             select(Vacancy, score)
             .where(*conditions)
             .where(
-                Vacancy.search_vector.op("@@")(tsq_ru)
-                | Vacancy.search_vector.op("@@")(tsq_en)
-                | (rank_trgm > 0.2)
+                or_(
+                    Vacancy.search_vector.op("@@")(tsq_ru),
+                    Vacancy.search_vector.op("@@")(tsq_en),
+                    Vacancy.search_vector.op("@@")(focused_tsq_ru),
+                    Vacancy.search_vector.op("@@")(focused_tsq_en),
+                    rank_trgm_title > 0.2,
+                    focused_rank_trgm_title > 0.2,
+                )
             )
             .order_by(desc(score), desc(Vacancy.created_at))
             .limit(filters.limit + 1 if filters.limit else 51)
         )
 
         result = await session.execute(stmt)
-                
         return result.scalars().all()
 
     @staticmethod
@@ -117,10 +160,8 @@ class VacancyRepository:
         vacancy: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
-
         await session.delete(vacancy)
         await session.commit()
-
         return vacancy
 
     @staticmethod
@@ -128,7 +169,6 @@ class VacancyRepository:
         vacancy: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
-
         vacancy.status = VacancyStatus.BANNED
 
         await session.commit()
@@ -141,7 +181,6 @@ class VacancyRepository:
         vacancy_obj: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
-
         session.add(vacancy_obj)
 
         await session.commit()
@@ -155,7 +194,6 @@ class VacancyRepository:
         new_data: BaseModel,
         session: AsyncSession,
     ) -> Vacancy:
-
         update_dict = new_data.model_dump(exclude_unset=True)
 
         for field, value in update_dict.items():
@@ -166,3 +204,5 @@ class VacancyRepository:
         await session.refresh(vacancy_obj)
 
         return vacancy_obj
+
+

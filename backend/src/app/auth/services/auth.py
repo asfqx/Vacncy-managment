@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.adapters.cache import BaseCacheAdapter, RedisAdapter
 from app.auth.schemas.auth import CreateSuperuserRequest
 from app.core import DBSession, settings
-from app.enum import UserRole
+from app.enum import UserRole, UserStatus
 from app.error_handler import handle_connection_errors, handle_model_errors
 from app.security import Argon2Hasher, JWTUtils
 from app.users.model import User
@@ -97,6 +97,12 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
+            )
+        
+        if exist_user.status != UserStatus.ACTIVE:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь забанен",
             )
 
         if not Argon2Hasher.verify(password, exist_user.password_hash):
@@ -243,3 +249,4 @@ class AuthService:
         return {
             "role": user.role,
         }
+

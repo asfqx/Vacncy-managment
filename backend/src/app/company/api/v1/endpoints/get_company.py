@@ -137,6 +137,21 @@ async def update_mine(
 
 
 @router.get(
+    "/by-user/{user_uuid}/",
+    status_code=status.HTTP_200_OK,
+    summary="Получить компанию пользователя",
+    description="Возвращает компанию по UUID пользователя. Доступно администратору.",
+    response_model=CompanyResponse,
+)
+async def get_by_user(
+    user_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> Company:
+    return await CompanyService.get_company_by_user(current_user=user, user_uuid=user_uuid, session=session)
+
+
+@router.get(
     "/{company_uuid}/",
     status_code=status.HTTP_200_OK,
     summary="Получить компанию по UUID",

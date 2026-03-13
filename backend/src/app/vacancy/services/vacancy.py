@@ -50,6 +50,7 @@ class VacancyService:
         filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
         vacancies = await VacancyRepository.get_all(filters, session)
 
         if not vacancies:
@@ -69,6 +70,7 @@ class VacancyService:
         data: VacancyUpdateRequest,
         session: AsyncSession,
     ) -> Vacancy:
+        
         vacancy = await VacancyRepository.get(vacancy_uuid, session)
 
         if not vacancy:
@@ -94,6 +96,7 @@ class VacancyService:
         data: VacancyCreateRequest,
         session: AsyncSession,
     ) -> Vacancy:
+        
         vacancy = await VacancyRepository.get_by_title(data.title, session)
 
         if vacancy:
@@ -134,6 +137,7 @@ class VacancyService:
         vacancy_uuid: UUID,
         session: AsyncSession,
     ) -> Vacancy:
+        
         vacancy = await VacancyRepository.get(vacancy_uuid, session)
 
         if not vacancy:
@@ -169,3 +173,4 @@ class VacancyService:
             )
 
         return await VacancyRepository.soft_delete(vacancy, session)
+

@@ -1,4 +1,4 @@
-from uuid import UUID
+﻿from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,6 @@ from app.resume.schemas.resume import (
 )
 from app.search_request.service import SearchRequestService
 from app.users.model import User
-from app.users.repository import UserRepository
 
 
 class ResumeService:
@@ -30,7 +29,6 @@ class ResumeService:
         
         educations = await ResumeRepository.get_educations(resume.uuid, session)
         experiences = await ResumeRepository.get_experiences(resume.uuid, session)
-        owner = await UserRepository.get(resume.user_id, session)
 
         return ResumeResponse(
             uuid=resume.uuid,
@@ -41,9 +39,6 @@ class ResumeService:
             currency=resume.currency,
             gender=resume.gender,
             birth_date=resume.birth_date,
-            email=owner.email if owner else None,
-            telegram=owner.telegram if owner else None,
-            phone_number=owner.phone_number if owner else None,
             created_at=resume.created_at,
             updated_at=resume.updated_at,
             educations=[ResumeEducationResponse.model_validate(item) for item in educations],
@@ -62,7 +57,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
 
         resume = await ResumeRepository.get_by_user(user.uuid, session)
@@ -90,7 +85,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
 
         resume = await ResumeRepository.get_by_user(user.uuid, session)
@@ -98,7 +93,7 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         return await ResumeService.build_response(resume, session)
@@ -112,7 +107,7 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         return await ResumeService.build_response(resume, session)
@@ -129,7 +124,7 @@ class ResumeService:
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав просматривать резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РїСЂРѕСЃРјР°С‚СЂРёРІР°С‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resumes = list(await ResumeRepository.get_all(filters, session))
@@ -137,7 +132,7 @@ class ResumeService:
         if not resumes:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
         
         
@@ -157,7 +152,7 @@ class ResumeService:
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав просматривать резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РїСЂРѕСЃРјР°С‚СЂРёРІР°С‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resumes = list(await ResumeRepository.search(resume_title, filters, session))
@@ -165,7 +160,7 @@ class ResumeService:
         if not resumes:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         background.add_task(SearchRequestService.create, user.uuid, resume_title)
@@ -185,7 +180,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resume = await ResumeRepository.get(resume_uuid, session)
@@ -193,13 +188,13 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         if resume.user_id != user.uuid:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                "У вас нет прав просматривать это резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РїСЂРѕСЃРјР°С‚СЂРёРІР°С‚СЊ СЌС‚Рѕ СЂРµР·СЋРјРµ",
             )
 
         education = ResumeEducation(resume_id=resume.uuid, **data.model_dump())
@@ -219,7 +214,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resume = await ResumeRepository.get(resume_uuid, session)
@@ -227,13 +222,13 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         if resume.user_id != user.uuid:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                "У вас нет прав изменять это резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёР·РјРµРЅСЏС‚СЊ СЌС‚Рѕ СЂРµР·СЋРјРµ",
             )
             
         education = await ResumeRepository.get_education(education_uuid, session)
@@ -241,7 +236,7 @@ class ResumeService:
         if not education or education.resume_id != resume.uuid:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Образование не найдено",
+                "РћР±СЂР°Р·РѕРІР°РЅРёРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         return await ResumeRepository.delete_education(education, session)
@@ -259,7 +254,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resume = await ResumeRepository.get(resume_uuid, session)
@@ -267,13 +262,13 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         if resume.user_id != user.uuid:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                "У вас нет прав изменять это резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёР·РјРµРЅСЏС‚СЊ СЌС‚Рѕ СЂРµР·СЋРјРµ",
             )
 
         experience = ResumeExperience(resume_id=resume.uuid, **data.model_dump())
@@ -293,7 +288,7 @@ class ResumeService:
         if user.role == UserRole.COMPANY:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "У вас нет прав иметь резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёРјРµС‚СЊ СЂРµР·СЋРјРµ",
             )
             
         resume = await ResumeRepository.get(resume_uuid, session)
@@ -301,13 +296,13 @@ class ResumeService:
         if not resume:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Резюме не найдено",
+                "Р РµР·СЋРјРµ РЅРµ РЅР°Р№РґРµРЅРѕ",
             )
 
         if resume.user_id != user.uuid:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
-                "У вас нет прав изменять это резюме",
+                "РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІ РёР·РјРµРЅСЏС‚СЊ СЌС‚Рѕ СЂРµР·СЋРјРµ",
             )
             
         experience = await ResumeRepository.get_experience(experience_uuid, session)
@@ -315,7 +310,31 @@ class ResumeService:
         if not experience or experience.resume_id != resume.uuid:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                "Опыт не наден",
+                "РћРїС‹С‚ РЅРµ РЅР°РґРµРЅ",
             )
 
         return await ResumeRepository.delete_experience(experience, session)
+    @staticmethod
+    @handle_model_errors
+    @handle_connection_errors
+    async def delete_resume(
+        user: User,
+        resume_uuid: UUID,
+        session: AsyncSession,
+    ) -> Resume:
+        resume = await ResumeRepository.get(resume_uuid, session)
+
+        if not resume:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                "Резюме не найдено",
+            )
+
+        if user.role != UserRole.ADMIN and resume.user_id != user.uuid:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                "У вас нет прав удалять это резюме",
+            )
+
+        return await ResumeRepository.delete(resume, session)
+

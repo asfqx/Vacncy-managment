@@ -1,4 +1,4 @@
-from enum import StrEnum
+﻿from enum import StrEnum
 
 
 class UserRole(StrEnum):
@@ -36,4 +36,10 @@ class Gender(StrEnum):
     
     MALE = "MALE"
     FEMALE = "FEMALE"
-    
+
+
+class ResponseStatus(StrEnum):
+
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"

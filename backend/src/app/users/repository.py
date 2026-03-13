@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.users.filter import UserFilterQueryParams
 from app.users.model import User
+from app.enum import UserStatus
 
 
 class UserRepository:
@@ -94,8 +95,10 @@ class UserRepository:
             select(User)
             .where(*conditions)
             .order_by(User.uuid)
-            .limit(filters.limit + 1)
         )
+
+        if filters.limit:
+            stmt = stmt.limit(filters.limit + 1)
 
         result = await session.execute(stmt)
 
@@ -171,4 +174,27 @@ class UserRepository:
         await session.refresh(user_obj)
 
         return user_obj
+    
+    @staticmethod
+    async def ban(
+        user_obj: User,
+        session: AsyncSession,
+    ) -> None:
+
+        user_obj.status = UserStatus.BANNED
+
+        await session.commit()
+        await session.refresh(user_obj)
+
+    @staticmethod
+    async def unban(
+        user_obj: User,
+        session: AsyncSession,
+    ) -> None:
+
+        user_obj.status = UserStatus.ACTIVE
+
+        await session.commit()
+        await session.refresh(user_obj)
+
 

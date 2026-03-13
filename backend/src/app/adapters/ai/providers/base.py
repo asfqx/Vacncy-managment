@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod
+﻿from abc import ABC, abstractmethod
 from typing import Any
 
 
 class BaseAIProvider(ABC):
-
     @abstractmethod
     def __init__(
         self,
@@ -17,4 +16,5 @@ class BaseAIProvider(ABC):
         prompt: str,
         data: dict[str, Any],
         temperature: float = 0.2,
+        timeout_seconds: float | None = None,
     ) -> str: ...

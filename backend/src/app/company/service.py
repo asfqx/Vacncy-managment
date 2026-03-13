@@ -1,4 +1,4 @@
-from uuid import UUID
+﻿from uuid import UUID
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -25,14 +25,12 @@ class CompanyService:
 
         return {
             "uuid": company.uuid,
+            "user_uuid": company.user_uuid,
             "title": company.title,
             "description": company.description,
             "company_size": company.company_size,
             "website": company.website,
             "avatar_url": owner.avatar_url if owner else None,
-            "email": owner.email if owner else None,
-            "telegram": owner.telegram if owner else None,
-            "phone_number": owner.phone_number if owner else None,
         }
 
     @staticmethod
@@ -42,7 +40,6 @@ class CompanyService:
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
-        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -70,12 +67,35 @@ class CompanyService:
     @staticmethod
     @handle_model_errors
     @handle_connection_errors
+    async def get_company_by_user(
+        current_user: User,
+        user_uuid: UUID,
+        session: AsyncSession,
+    ) -> dict[str, Any]:
+        if current_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail="Недостаточно прав для просмотра компании пользователя",
+            )
+
+        company = await CompanyRepository.get_by_user(user_uuid, session)
+
+        if not company:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                detail="Компания не найдена",
+            )
+
+        return await CompanyService._serialize_company(company, session)
+
+    @staticmethod
+    @handle_model_errors
+    @handle_connection_errors
     async def update(
         new_bio: CompanyUpdateRequest,
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
-        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -101,6 +121,7 @@ class CompanyService:
                 )
 
         updated = await CompanyRepository.update(company, new_bio, session)
+
         return await CompanyService._serialize_company(updated, session)
 
     @staticmethod
@@ -111,7 +132,6 @@ class CompanyService:
         data: CompanyCreateRequest,
         session: AsyncSession,
     ) -> dict[str, Any]:
-        
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
@@ -141,6 +161,7 @@ class CompanyService:
         )
 
         created = await CompanyRepository.create(company, session)
+
         return await CompanyService._serialize_company(created, session)
 
     @staticmethod
@@ -150,7 +171,6 @@ class CompanyService:
         company_id: UUID,
         session: AsyncSession,
     ) -> dict[str, Any]:
-        
         company = await CompanyRepository.get(company_id, session)
 
         if not company:

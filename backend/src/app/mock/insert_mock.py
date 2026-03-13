@@ -3,8 +3,6 @@
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.company.model import Company
-from app.company.repository import CompanyRepository
 from app.enum import UserRole
 from app.mock.data import CANDIDATE_PASSWORD, EMPLOYER_PASSWORD, MOCK_CANDIDATES, MOCK_EMPLOYERS
 from app.resume.models.education import ResumeEducation
@@ -14,9 +12,6 @@ from app.resume.repository import ResumeRepository
 from app.security import Argon2Hasher
 from app.users.model import User
 from app.users.repository import UserRepository
-from app.vacancy.filter import VacancyFilterQueryParams
-from app.vacancy.model import Vacancy
-from app.vacancy.repository import VacancyRepository
 
 
 async def _get_or_create_user(
@@ -28,7 +23,9 @@ async def _get_or_create_user(
     role: UserRole,
     password: str,
 ) -> tuple[User, bool]:
+    
     existing_user = await UserRepository.get_by_login(username, session)
+    
     if existing_user:
         return existing_user, False
 
@@ -41,6 +38,7 @@ async def _get_or_create_user(
         email_confirmed=True,
     )
     user = await UserRepository.create(user, session)
+    
     return user, True
 
 
@@ -49,7 +47,6 @@ async def insert_mock_vacancies(
 ) -> None:
     created_employers = 0
     created_companies = 0
-    created_vacancies = 0
     created_candidates = 0
     created_resumes = 0
 
@@ -64,37 +61,6 @@ async def insert_mock_vacancies(
         )
         if user_created:
             created_employers += 1
-
-        company = await CompanyRepository.get_by_user(user.uuid, session)
-        if not company:
-            company = Company(
-                user_uuid=user.uuid,
-                title=profile["company"]["title"],
-                description=profile["company"]["description"],
-                website=profile["company"]["website"],
-                company_size=profile["company"]["company_size"],
-            )
-            company = await CompanyRepository.create(company, session)
-            created_companies += 1
-
-        existing_vacancies = await VacancyRepository.get_all(
-            VacancyFilterQueryParams(company_id=company.uuid, include_archived=True, limit=2),
-            session,
-        )
-        if not existing_vacancies:
-            for vacancy_data in profile["vacancies"]:
-                vacancy = Vacancy(
-                    title=vacancy_data["title"],
-                    description=vacancy_data["description"],
-                    company_id=company.uuid,
-                    city=vacancy_data["city"],
-                    remote=vacancy_data["remote"],
-                    salary=vacancy_data["salary"],
-                    currency=vacancy_data["currency"],
-                )
-                created = await VacancyRepository.create(vacancy, session)
-                if created:
-                    created_vacancies += 1
 
     for profile in MOCK_CANDIDATES:
         user, user_created = await _get_or_create_user(
@@ -154,10 +120,9 @@ async def insert_mock_vacancies(
             )
 
     logger.info(
-        "Моки обновлены: создано работодателей={}, компаний={}, вакансий={}, кандидатов={}, резюме={}",
+        "Моки обновлены: создано работодателей={}, компаний={}, кандидатов={}, резюме={}",
         created_employers,
         created_companies,
-        created_vacancies,
         created_candidates,
         created_resumes,
     )

@@ -284,3 +284,4 @@ async def delete(
         vacancy_uuid=vacancy_uuid,
         session=sesssion,
     )
+

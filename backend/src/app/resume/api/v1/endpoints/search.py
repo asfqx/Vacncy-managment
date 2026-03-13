@@ -23,6 +23,22 @@ from app.users.dependency import AuthenticatedActiveUser
 router = APIRouter()
 
 
+
+@router.delete(
+    "/{resume_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Удалить резюме",
+    description="Удаляет резюме по UUID. Владелец может удалить свое резюме, администратор — любое.",
+    response_model=ResumeResponse,
+)
+async def delete_resume(
+    resume_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> ResumeResponse:
+    resume = await ResumeService.delete_resume(user=user, resume_uuid=resume_uuid, session=session)
+    return await ResumeService.build_response(resume, session)
+
 @router.post(
     "/",
     status_code=status.HTTP_200_OK,
@@ -299,6 +315,22 @@ async def get_resume(
     return await ResumeService.get(resume_uuid=resume_uuid, session=session)
 
 
+
+@router.delete(
+    "/{resume_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Удалить резюме",
+    description="Удаляет резюме по UUID. Владелец может удалить свое резюме, администратор — любое.",
+    response_model=ResumeResponse,
+)
+async def delete_resume(
+    resume_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> ResumeResponse:
+    resume = await ResumeService.delete_resume(user=user, resume_uuid=resume_uuid, session=session)
+    return await ResumeService.build_response(resume, session)
+
 @router.post(
     "/{resume_uuid}/educations",
     status_code=status.HTTP_201_CREATED,
@@ -408,6 +440,22 @@ async def delete_education(
     )
 
 
+
+@router.delete(
+    "/{resume_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Удалить резюме",
+    description="Удаляет резюме по UUID. Владелец может удалить свое резюме, администратор — любое.",
+    response_model=ResumeResponse,
+)
+async def delete_resume(
+    resume_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> ResumeResponse:
+    resume = await ResumeService.delete_resume(user=user, resume_uuid=resume_uuid, session=session)
+    return await ResumeService.build_response(resume, session)
+
 @router.post(
     "/{resume_uuid}/experiences",
     status_code=status.HTTP_201_CREATED,
@@ -514,3 +562,4 @@ async def delete_experience(
         experience_uuid=experience_uuid,
         session=session,
     )
+

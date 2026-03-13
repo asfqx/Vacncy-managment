@@ -1,7 +1,7 @@
-from datetime import date, datetime
+﻿from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.enum import EducationLevel, Gender
 
@@ -76,9 +76,6 @@ class ResumeResponse(BaseModel):
     currency: str | None
     gender: Gender | None
     birth_date: date | None
-    email: EmailStr | None = None
-    telegram: str | None = None
-    phone_number: str | None = None
     created_at: datetime
     updated_at: datetime
     educations: list[ResumeEducationResponse]

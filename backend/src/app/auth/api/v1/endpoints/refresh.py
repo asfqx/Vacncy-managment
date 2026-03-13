@@ -11,7 +11,7 @@ from app.auth.schemas import (
 from app.auth.services import AuthService
 from app.core import DBSession, RateLimitErrorResponse
 from app.error_handler import error_schemas
-from app.users.dependency import AuthenticatedUser
+from app.users.dependency import AuthenticatedActiveUser
 
 
 router = APIRouter()
@@ -51,7 +51,7 @@ router = APIRouter()
 )
 async def refresh_token(
     refresh_data: CreateTokenPairResponse,
-    user: AuthenticatedUser,
+    user: AuthenticatedActiveUser,
     response: Response,
     session: DBSession,
 ) -> dict[str, Any]:
@@ -99,3 +99,4 @@ async def check_role(
     session: DBSession,
 ) -> dict[str, Any]:
     return await AuthService.get_role_from_jwt(access_data.access_token, session)
+

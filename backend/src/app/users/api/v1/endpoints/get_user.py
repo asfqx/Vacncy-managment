@@ -1,10 +1,12 @@
-﻿from typing import Any
+﻿from typing import Any, Sequence
+from uuid import UUID
 
 from fastapi import APIRouter, status
 
 from app.core import DBSession, RateLimitErrorResponse
 from app.error_handler import error_schemas
 from app.users.dependency import AuthenticatedActiveUser
+from app.users.filter import UserFilterDepends
 from app.users.model import User
 from app.users.schema import (
     CreatePreSignedURLResponse,
@@ -15,11 +17,26 @@ from app.users.schema import (
 from app.users.service import UserService
 
 
-router = APIRouter(prefix="/me")
+router = APIRouter()
 
 
 @router.get(
     "/",
+    status_code=status.HTTP_200_OK,
+    summary="Получить список пользователей",
+    description="Возвращает список пользователей. Доступно только администратору.",
+    response_model=list[GetUserProfileResponse],
+)
+async def get_all_users(
+    user: AuthenticatedActiveUser,
+    filters: UserFilterDepends,
+    session: DBSession,
+) -> Sequence[User]:
+    return await UserService.get_all(current_user=user, filters=filters, session=session)
+
+
+@router.get(
+    "/me/",
     status_code=status.HTTP_200_OK,
     summary="Получить мой профиль",
     description=(
@@ -61,7 +78,7 @@ async def get_user_profile(
 
 
 @router.patch(
-    "/",
+    "/me/",
     status_code=status.HTTP_200_OK,
     summary="Обновить мой профиль",
     description=(
@@ -109,7 +126,75 @@ async def update_bio(
 
 
 @router.get(
-    "/avatar/upload-url",
+    "/{user_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Получить профиль пользователя по UUID",
+    description="Возвращает профиль пользователя по UUID. Требуется JWT access-токен.",
+    response_model=GetUserProfileResponse,
+    responses={
+        200: {
+            "description": "Профиль пользователя успешно получен",
+            "model": GetUserProfileResponse,
+        },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
+        404: {
+            "description": "Пользователь не найден",
+            "model": error_schemas.NotFoundErrorResponse,
+        },
+        429: {
+            "description": "Превышен лимит запросов",
+            "model": RateLimitErrorResponse,
+        },
+        500: {
+            "description": "Внутренняя ошибка сервера",
+            "model": error_schemas.InternalServerErrorResponse,
+        },
+    },
+)
+async def get_user_by_uuid(
+    user_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> User:
+    return await UserService.get_user_by_id(
+        user_uuid=user_uuid,
+        session=session,
+    )
+
+
+@router.delete(
+    "/{user_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Заблокировать пользователя",
+    description="Блокирует пользователя по UUID. Доступно только администратору.",
+)
+async def delete_user(
+    user_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> None:
+    await UserService.delete(current_user=user, user_uuid=user_uuid, session=session)
+
+
+@router.patch(
+    "/{user_uuid}/unban",
+    status_code=status.HTTP_200_OK,
+    summary="Разблокировать пользователя",
+    description="Снимает блокировку с пользователя по UUID. Доступно только администратору.",
+)
+async def unban_user(
+    user_uuid: UUID,
+    user: AuthenticatedActiveUser,
+    session: DBSession,
+) -> None:
+    await UserService.unban(current_user=user, user_uuid=user_uuid, session=session)
+
+
+@router.get(
+    "/me/avatar/upload-url",
     status_code=status.HTTP_200_OK,
     summary="Получить ссылку для загрузки аватара",
     description=(
