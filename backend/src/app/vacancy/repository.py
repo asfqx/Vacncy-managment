@@ -10,25 +10,14 @@ from app.enum import VacancyStatus
 
 from .filter import VacancyFilterQueryParams
 from .model import Vacancy
+from .const import GENERIC_SEARCH_TERMS
 
 
 class VacancyRepository:
-    GENERIC_TERMS = {
-        "разработчик",
-        "developer",
-        "dev",
-        "engineer",
-        "senior",
-        "middle",
-        "junior",
-        "intern",
-        "lead",
-        "специалист",
-        "программист",
-    }
 
     @staticmethod
     def _build_conditions(filters: dict[str, Any]) -> list[Any]:
+        
         filter_mapping: dict[str, Callable[[Any], Any]] = {
             "city": lambda v: Vacancy.city.ilike(f"%{v}%"),
             "company_id": lambda v: Vacancy.company_id == v,
@@ -53,8 +42,10 @@ class VacancyRepository:
 
     @staticmethod
     def _focused_query(raw_query: str) -> str:
+        
         tokens = [token.strip().lower() for token in raw_query.split() if token.strip()]
-        focused_tokens = [token for token in tokens if token not in VacancyRepository.GENERIC_TERMS]
+        focused_tokens = [token for token in tokens if token not in GENERIC_SEARCH_TERMS]
+        
         return " ".join(focused_tokens) or raw_query.strip()
 
     @staticmethod
@@ -62,8 +53,10 @@ class VacancyRepository:
         vacancy_uuid: UUID,
         session: AsyncSession,
     ) -> Vacancy | None:
+        
         stmt = select(Vacancy).where(Vacancy.uuid == vacancy_uuid)
         result = await session.execute(stmt)
+        
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -71,8 +64,10 @@ class VacancyRepository:
         vacancy_title: str,
         session: AsyncSession,
     ) -> Vacancy | None:
+        
         stmt = select(Vacancy).where(Vacancy.title == vacancy_title)
         result = await session.execute(stmt)
+        
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -80,8 +75,10 @@ class VacancyRepository:
         company_uuid: UUID,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
         stmt = select(Vacancy).where(Vacancy.company_id == company_uuid)
         result = await session.execute(stmt)
+        
         return result.scalars().all()
 
     @staticmethod
@@ -89,6 +86,7 @@ class VacancyRepository:
         filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions = VacancyRepository._build_conditions(stmt_filters)
 
@@ -106,6 +104,7 @@ class VacancyRepository:
         filters: VacancyFilterQueryParams,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions = VacancyRepository._build_conditions(stmt_filters)
 
@@ -160,8 +159,10 @@ class VacancyRepository:
         vacancy: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
+        
         await session.delete(vacancy)
         await session.commit()
+        
         return vacancy
 
     @staticmethod
@@ -169,6 +170,7 @@ class VacancyRepository:
         vacancy: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
+        
         vacancy.status = VacancyStatus.BANNED
 
         await session.commit()
@@ -181,6 +183,7 @@ class VacancyRepository:
         vacancy_obj: Vacancy,
         session: AsyncSession,
     ) -> Vacancy:
+        
         session.add(vacancy_obj)
 
         await session.commit()
@@ -194,6 +197,7 @@ class VacancyRepository:
         new_data: BaseModel,
         session: AsyncSession,
     ) -> Vacancy:
+        
         update_dict = new_data.model_dump(exclude_unset=True)
 
         for field, value in update_dict.items():

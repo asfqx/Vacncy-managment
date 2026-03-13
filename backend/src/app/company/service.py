@@ -21,6 +21,7 @@ class CompanyService:
         company: Company,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         owner = await UserRepository.get(company.user_uuid, session)
 
         return {
@@ -40,6 +41,7 @@ class CompanyService:
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -72,6 +74,7 @@ class CompanyService:
         user_uuid: UUID,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         if current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
@@ -96,6 +99,7 @@ class CompanyService:
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -132,6 +136,7 @@ class CompanyService:
         data: CompanyCreateRequest,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
@@ -171,6 +176,7 @@ class CompanyService:
         company_id: UUID,
         session: AsyncSession,
     ) -> dict[str, Any]:
+        
         company = await CompanyRepository.get(company_id, session)
 
         if not company:

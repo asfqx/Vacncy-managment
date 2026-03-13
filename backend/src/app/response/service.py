@@ -28,6 +28,7 @@ from .schema import ResponseUpdateStatusRequest
 class ResponseService:
     @staticmethod
     def _format_experiences(experiences: list[dict[str, str]]) -> str:
+        
         formatted: list[str] = []
 
         for item in experiences:
@@ -42,6 +43,7 @@ class ResponseService:
 
     @staticmethod
     def _sanitize_generated_text(text: str, candidate_name: str, company_name: str) -> str:
+
         cleaned = text.strip()
 
         replacements = {
@@ -78,6 +80,7 @@ class ResponseService:
         data: AIResponseCreateRequest,
         session: AsyncSession,
     ) -> AIResponseCreateResponse:
+        
         if user.role != UserRole.CANDIDATE:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -149,6 +152,7 @@ class ResponseService:
         data: ResponseCreateRequest,
         session: AsyncSession,
     ) -> Response:
+        
         if user.role != UserRole.CANDIDATE:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -187,6 +191,7 @@ class ResponseService:
         user: User,
         session: AsyncSession,
     ) -> Sequence[Response]:
+        
         if user.role == UserRole.ADMIN:
             responses = await ResponseRepository.get_all(session)
         elif user.role == UserRole.CANDIDATE:
@@ -218,6 +223,7 @@ class ResponseService:
         response_uuid: UUID,
         session: AsyncSession,
     ) -> Response:
+        
         response = await ResponseRepository.get(response_uuid, session)
 
         if not response:
@@ -262,6 +268,7 @@ class ResponseService:
         data: ResponseUpdateStatusRequest,
         session: AsyncSession,
     ) -> Response:
+        
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -304,6 +311,7 @@ class ResponseService:
         response_uuid: UUID,
         session: AsyncSession,
     ) -> Response:
+        
         if user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

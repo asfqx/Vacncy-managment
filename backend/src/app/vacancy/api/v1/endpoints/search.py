@@ -60,6 +60,7 @@ async def create(
     user: AuthenticatedActiveUser,
     sesssion: DBSession,
 ) -> Vacancy:
+    
     return await VacancyService.create(user=user, data=data, session=sesssion)
 
 
@@ -100,6 +101,7 @@ async def get_all(
     filters: VacancyFilterDepends,
     sesssion: DBSession,
 ) -> Sequence[Vacancy]:
+    
     return await VacancyService.get_all(filters, session=sesssion)
 
 
@@ -143,6 +145,7 @@ async def search(
     background: BackgroundTasks,
     sesssion: DBSession,
 ) -> Sequence[Vacancy]:
+    
     return await VacancyService.search(
         user_uuid=user.uuid,
         vacancy_name=vacancy_title,
@@ -190,6 +193,7 @@ async def recomendation(
     limit: int = 50,
     cursor: datetime | None = None,
 ) -> Sequence[Vacancy]:
+    
     return await RecomendationService.recomendation(
         user_uuid=user.uuid,
         limit=limit,
@@ -235,6 +239,7 @@ async def get(
     vacancy_uuid: UUID,
     sesssion: DBSession,
 ) -> Vacancy:
+    
     return await VacancyService.get(vacancy_uuid, session=sesssion)
 
 
