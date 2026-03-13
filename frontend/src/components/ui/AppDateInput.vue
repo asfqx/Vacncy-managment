@@ -1,15 +1,23 @@
 ﻿<template>
   <div ref="root" class="dateInput">
-    <button
+    <div
       class="dateInput__trigger"
-      :class="{ 'is-open': isOpen, 'is-empty': !modelValue, 'is-disabled': disabled }"
-      type="button"
-      :disabled="disabled"
-      @click="toggle"
+      :class="{ 'is-open': isOpen, 'is-empty': !modelValue && !inputValue, 'is-disabled': disabled }"
     >
-      <span>{{ displayValue }}</span>
-      <span class="dateInput__icon"></span>
-    </button>
+      <input
+        v-model="inputValue"
+        class="dateInput__field"
+        type="text"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        inputmode="numeric"
+        @focus="open"
+        @blur="handleBlur"
+      />
+      <button class="dateInput__iconButton" type="button" :disabled="disabled" @click="toggle">
+        <span class="dateInput__icon"></span>
+      </button>
+    </div>
 
     <div v-if="isOpen && !disabled" class="dateInput__popup">
       <div class="dateInput__header">
@@ -77,22 +85,18 @@ const monthNames = [
 const root = ref(null);
 const isOpen = ref(false);
 const viewDate = ref(getInitialViewDate(props.modelValue));
+const inputValue = ref("");
 
 watch(
   () => props.modelValue,
   (value) => {
+    inputValue.value = formatInputValue(value);
     if (value) {
       viewDate.value = getInitialViewDate(value);
     }
-  }
+  },
+  { immediate: true }
 );
-
-const displayValue = computed(() => {
-  if (!props.modelValue) return props.placeholder;
-  const parsed = parseModelDate(props.modelValue);
-  if (!parsed) return props.placeholder;
-  return formatDisplayDate(parsed);
-});
 
 const monthLabel = computed(() => `${monthNames[viewDate.value.getMonth()]} ${viewDate.value.getFullYear()}`);
 
@@ -124,7 +128,14 @@ function parseModelDate(value) {
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return null;
   const date = new Date(year, month - 1, day);
-  if (Number.isNaN(date.getTime())) return null;
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
   return date;
 }
 
@@ -139,8 +150,18 @@ function formatDisplayDate(date) {
   return new Intl.DateTimeFormat("ru-RU").format(date);
 }
 
+function formatInputValue(value) {
+  const parsed = parseModelDate(value);
+  return parsed ? formatDisplayDate(parsed) : "";
+}
+
 function getInitialViewDate(value) {
   return parseModelDate(value) || new Date();
+}
+
+function open() {
+  if (props.disabled) return;
+  isOpen.value = true;
 }
 
 function toggle() {
@@ -160,11 +181,13 @@ function goToTodayMonth() {
 
 function selectDate(value) {
   emit("update:modelValue", value);
+  inputValue.value = formatInputValue(value);
   isOpen.value = false;
 }
 
 function clearValue() {
   emit("update:modelValue", "");
+  inputValue.value = "";
   isOpen.value = false;
 }
 
@@ -176,6 +199,48 @@ function handleClickOutside(event) {
   if (!root.value?.contains(event.target)) {
     isOpen.value = false;
   }
+}
+
+function parseInputDate(value) {
+  const normalized = String(value || "").trim().replace(/\s+/g, "");
+  if (!normalized) return null;
+  const match = normalized.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (!match) return null;
+  const [, dayRaw, monthRaw, yearRaw] = match;
+  const day = Number(dayRaw);
+  const month = Number(monthRaw);
+  const year = Number(yearRaw);
+  if (!day || !month || !year) return null;
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+}
+
+function handleBlur() {
+  const raw = inputValue.value.trim();
+  if (!raw) {
+    if (props.modelValue) emit("update:modelValue", "");
+    inputValue.value = "";
+    return;
+  }
+
+  const parsed = parseInputDate(raw);
+  if (!parsed) {
+    inputValue.value = formatInputValue(props.modelValue);
+    return;
+  }
+
+  const nextValue = formatModelDate(parsed);
+  emit("update:modelValue", nextValue);
+  inputValue.value = formatDisplayDate(parsed);
+  viewDate.value = parsed;
 }
 
 onMounted(() => {
@@ -196,7 +261,7 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 52px;
   border-radius: 16px;
-  padding: 0 16px;
+  padding: 0 8px 0 16px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     rgba(8, 10, 16, 0.96);
@@ -206,8 +271,23 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  cursor: pointer;
+  cursor: text;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.dateInput__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 50px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.dateInput__field::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .dateInput__trigger:hover,
@@ -217,7 +297,7 @@ onBeforeUnmount(() => {
 }
 
 .dateInput__trigger.is-empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .dateInput__trigger.is-disabled {
@@ -226,6 +306,22 @@ onBeforeUnmount(() => {
   border-color: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.dateInput__iconButton {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dateInput__iconButton:disabled {
+  cursor: not-allowed;
 }
 
 .dateInput__icon {
@@ -370,3 +466,4 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.68);
 }
 </style>
+

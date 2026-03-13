@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <DashboardShell
     title="Создание вакансии"
     subtitle="Заполните ключевые поля и опубликуйте вакансию от имени компании."
@@ -208,7 +208,7 @@ async function submitVacancy() {
 .field span { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; }
 .input { min-height: 52px; border-radius: 16px; padding: 0 16px; background: rgba(8,10,16,0.96); border: 1px solid rgba(255,255,255,0.08); color: #eef2ff; outline: none; }
 .input:focus { border-color: rgba(47,115,255,0.6); box-shadow: 0 0 0 4px rgba(47,115,255,0.14); }
-.input--textarea { min-height: 200px; padding: 14px 16px; resize: vertical; }
+.input--textarea { min-height: 200px; padding: 14px 16px; resize: none; }
 .toggleRow { grid-column: 1 / -1; display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .toggle { min-height: 48px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.72); cursor: pointer; font-weight: 700; }
 .toggle.active { color: #fff; border-color: rgba(47,115,255,0.34); background: rgba(47,115,255,0.18); }
@@ -220,3 +220,5 @@ async function submitVacancy() {
 @media (max-width: 1080px) { .pageGrid { grid-template-columns: 1fr; } }
 @media (max-width: 780px) { .panelHeader { flex-direction: column; align-items: flex-start; } .vacancyForm, .toggleRow { grid-template-columns: 1fr; } .field--full, .summaryBox, .actions { grid-column: auto; } .field--narrow { max-width: none; } }
 </style>
+
+

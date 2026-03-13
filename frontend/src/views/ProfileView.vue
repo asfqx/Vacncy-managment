@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <DashboardShell
     :title="pageTitle"
     :subtitle="pageSubtitle"
@@ -613,7 +613,7 @@ onMounted(loadProfile);
   padding-right: 186px;
 }
 .input:focus { border-color: rgba(47, 115, 255, 0.6); box-shadow: 0 0 0 4px rgba(47, 115, 255, 0.14); }
-.input--textarea { min-height: 136px; padding: 14px 16px; resize: vertical; }
+.input--textarea { min-height: 136px; padding: 14px 16px; resize: none; }
 .inputActionBtn {
   position: absolute;
   right: 8px;
@@ -689,3 +689,5 @@ onMounted(loadProfile);
   .formActions { grid-column: auto; }
 }
 </style>
+
+

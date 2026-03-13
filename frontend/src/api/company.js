@@ -5,6 +5,10 @@ export const companyApi = {
     return http.get("/api/v1/companies/me/").then((r) => r.data);
   },
 
+  getByUserId(userUuid) {
+    return http.get(`/api/v1/companies/by-user/${userUuid}/`).then((r) => r.data);
+  },
+
   getById(uuid) {
     return http.get(`/api/v1/companies/${uuid}/`).then((r) => r.data);
   },

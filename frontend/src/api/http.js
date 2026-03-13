@@ -7,6 +7,15 @@ export const http = axios.create({
   withCredentials: true,
 });
 
+function clearAuthAndRedirect() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
+
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -48,8 +57,15 @@ http.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    const status = error.response?.status;
+    const detail = String(error.response?.data?.detail || "");
 
-    if (error.response?.status === 401 && !original._retry) {
+    if (status === 403 && detail.includes("Пользователь заблокирован")) {
+      clearAuthAndRedirect();
+      return Promise.reject(error);
+    }
+
+    if (status === 401 && !original._retry) {
       original._retry = true;
 
       if (isRefreshing) {
@@ -72,8 +88,7 @@ http.interceptors.response.use(
         return http(original);
       } catch (e) {
         rejectQueue(e);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        clearAuthAndRedirect();
         return Promise.reject(e);
       } finally {
         isRefreshing = false;

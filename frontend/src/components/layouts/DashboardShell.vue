@@ -18,6 +18,10 @@
       </div>
 
       <div class="topbar__right">
+        <RouterLink v-if="adminPanelAction" class="ghostAction" :to="adminPanelAction.to">
+          {{ adminPanelAction.label }}
+        </RouterLink>
+
         <RouterLink v-if="secondaryAction" class="ghostAction" :to="secondaryAction.to">
           {{ secondaryAction.label }}
         </RouterLink>
@@ -60,6 +64,7 @@ import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { usersApi } from "../../api/users";
 import { useAuth } from "../../composables/useAuth";
+import { getUserRoleFromToken, isAdminRole } from "../../utils/auth";
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -99,6 +104,7 @@ const route = useRoute();
 const router = useRouter();
 const { logout } = useAuth();
 const profile = ref(null);
+const role = getUserRoleFromToken();
 
 const avatarLetterValue = computed(() => {
   const usernameLetter = String(profile.value?.username || "").trim().slice(0, 1);
@@ -106,11 +112,14 @@ const avatarLetterValue = computed(() => {
 });
 
 const avatarImageSrc = computed(() => buildAvatarUrl(profile.value?.avatar_url));
+const adminPanelAction = computed(() => (
+  isAdminRole(role) && route.path !== "/admin" ? { to: "/admin", label: "Панель администратора" } : null
+));
 const pageClass = computed(() => ({
   "page--solid": props.backgroundVariant === "solid",
 }));
-const avatarAlt = "\u0410\u0432\u0430\u0442\u0430\u0440";
-const logoutLabel = "\u0412\u044b\u0439\u0442\u0438";
+const avatarAlt = "Аватар";
+const logoutLabel = "Выйти";
 
 function buildAvatarUrl(objectName) {
   if (!objectName) return "";
@@ -253,6 +262,3 @@ onMounted(loadProfile);
   .layout { grid-template-columns: 1fr; }
 }
 </style>
-
-
-

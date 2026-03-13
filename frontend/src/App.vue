@@ -4,12 +4,14 @@
       <Transition name="screen-morph">
         <component :is="Component" :key="route.fullPath" class="screen-layer" />
       </Transition>
+      <ScrollToTopButton />
     </div>
   </RouterView>
 </template>
 
 <script setup>
 import { RouterView } from "vue-router";
+import ScrollToTopButton from "./components/ui/ScrollToTopButton.vue";
 </script>
 
 <style>
@@ -60,7 +62,7 @@ button, input { font: inherit; }
   position: relative;
   min-height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .screen-layer {
@@ -106,5 +108,4 @@ button, input { font: inherit; }
   filter: blur(4px) saturate(1.01) brightness(0.995);
 }
 </style>
-
 

@@ -255,3 +255,4 @@ onMounted(loadVacancies);
 @media (max-width: 1080px) { .listGrid { grid-template-columns: 1fr; } }
 @media (max-width: 780px) { .heroPanel, .emptyPanel, .vacancyCard__top { flex-direction: column; align-items: flex-start; } .vacancyCard__footer { flex-direction: column; } }
 </style>
+

@@ -5,6 +5,7 @@
     role-label="Кандидат"
     :nav-items="navItems"
     :primary-action="{ to: '/candidate/resume', label: 'Мои резюме' }"
+    :secondary-action="secondaryAction"
     home-path="/home"
     avatar-letter="К"
   >
@@ -83,7 +84,6 @@
         <div class="panelHeader">
           <div>
             <p class="eyebrow">Образование</p>
-            <h2 class="title title--small">Несколько записей</h2>
           </div>
         </div>
 
@@ -145,7 +145,6 @@
         <div class="panelHeader">
           <div>
             <p class="eyebrow">Опыт работы</p>
-            <h2 class="title title--small">Несколько мест работы</h2>
           </div>
         </div>
 
@@ -204,6 +203,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
+import { getUserRoleFromToken, isAdminRole } from "../utils/auth";
 import { RouterLink } from "vue-router";
 import DashboardShell from "../components/layouts/DashboardShell.vue";
 import ResumeCard from "../components/resumes/ResumeCard.vue";
@@ -213,6 +213,8 @@ import InlineLoader from "../components/ui/InlineLoader.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import { resumeApi } from "../api/resume";
 
+const role = getUserRoleFromToken();
+const secondaryAction = computed(() => (isAdminRole(role) ? { to: "/employer/vacancies", label: "Страница компании" } : null));
 const navItems = [
   { to: "/home", label: "Главная" },
   { to: "/vacancies", label: "Поиск вакансий" },
@@ -489,7 +491,12 @@ onMounted(loadResume);
 
 .formPanel,
 .previewPanel {
-  align-self: start;
+  height: 100%;
+}
+
+.previewPanel {
+  display: flex;
+  flex-direction: column;
 }
 
 .stackPanel {
@@ -597,7 +604,7 @@ onMounted(loadResume);
 .input--textarea {
   min-height: 132px;
   padding: 14px 16px;
-  resize: vertical;
+  resize: none;
 }
 
 .actions {
@@ -761,3 +768,10 @@ onMounted(loadResume);
   }
 }
 </style>
+
+
+
+
+
+
+

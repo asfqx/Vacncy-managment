@@ -1,10 +1,11 @@
-<template>
+﻿<template>
   <DashboardShell
     title="Поиск вакансий"
     subtitle="Кандидату доступны поиск вакансий, история откликов, управление резюме и профиль."
     role-label="Кандидат"
     :nav-items="navItems"
     :primary-action="{ to: '/candidate/resume', label: 'Создать резюме' }"
+    :secondary-action="secondaryAction"
     home-path="/home"
     avatar-letter="К"
   >
@@ -54,12 +55,18 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import DashboardShell from "../components/layouts/DashboardShell.vue";
 import InlineLoader from "../components/ui/InlineLoader.vue";
 import InfiniteSentinel from "../components/ui/InfiniteSentinel.vue";
 import VacancyCardHH from "../components/vacancies/VacancyCard.vue";
 import { useVacancies } from "../composables/useVacancies";
+import { getUserRoleFromToken, isAdminRole } from "../utils/auth";
+
+const role = getUserRoleFromToken();
+const secondaryAction = computed(() => (
+  isAdminRole(role) ? { to: "/employer/vacancies", label: "Страница компании" } : null
+));
 
 const navItems = [
   { to: "/home", label: "Главная" },

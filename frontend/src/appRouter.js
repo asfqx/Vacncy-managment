@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+﻿import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "./views/LoginView.vue";
 import RegisterView from "./views/RegisterView.vue";
 import RegisterRoleSelectView from "./views/RegisterRoleSelectView.vue";
@@ -16,12 +16,15 @@ import PasswordResetConfirmView from "./views/PasswordResetConfirmView.vue";
 import VacancyView from "./views/VacancyView.vue";
 import ResumeView from "./views/ResumeView.vue";
 import SharedHomeView from "./views/SharedHomeView.vue";
+import AdminPanelView from "./views/AdminPanelView.vue";
+import AdminUserProfileView from "./views/AdminUserProfileView.vue";
 import { getAccessToken, getDefaultRouteForRole, getUserRoleFromToken, USER_ROLES } from "./utils/auth";
 
 const employerRoles = [USER_ROLES.COMPANY, USER_ROLES.ADMIN];
-const candidateRoles = [USER_ROLES.CANDIDATE];
+const candidateRoles = [USER_ROLES.CANDIDATE, USER_ROLES.ADMIN];
 const candidateSearchRoles = [USER_ROLES.CANDIDATE, USER_ROLES.ADMIN];
 const sharedRoles = [...candidateRoles, ...employerRoles];
+const adminRoles = [USER_ROLES.ADMIN];
 
 const router = createRouter({
   history: createWebHistory(),
@@ -103,6 +106,18 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: sharedRoles },
     },
     {
+      path: "/admin",
+      name: "admin-panel",
+      component: AdminPanelView,
+      meta: { requiresAuth: true, roles: adminRoles },
+    },
+    {
+      path: "/admin/users/:uuid",
+      name: "admin-user-profile",
+      component: AdminUserProfileView,
+      meta: { requiresAuth: true, roles: adminRoles },
+    },
+    {
       path: "/:pathMatch(.*)*",
       redirect: () => getDefaultRouteForRole(getUserRoleFromToken()),
     },
@@ -131,3 +146,8 @@ router.beforeEach((to) => {
 });
 
 export default router;
+
+
+
+
+

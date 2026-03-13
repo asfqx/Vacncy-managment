@@ -17,6 +17,16 @@ function buildParams({ query, filters, cursor, limit }) {
   return params;
 }
 
+function hasActiveFilters(filters) {
+  return Boolean(
+    filters.remote !== null
+      || String(filters.city || "").trim()
+      || String(filters.salary_from || "").trim()
+      || String(filters.salary_to || "").trim()
+      || String(filters.company_id || "").trim()
+  );
+}
+
 export function useVacancies() {
   const items = ref([]);
   const loading = ref(false);
@@ -59,8 +69,9 @@ export function useVacancies() {
 
     try {
       const q = query.value.trim();
+      const filtersApplied = hasActiveFilters(filters);
 
-      if (!q) {
+      if (!q && !filtersApplied) {
         mode.value = "recommendations";
 
         const params = buildParams({
@@ -80,7 +91,7 @@ export function useVacancies() {
           const data = await vacanciesApi.getAll(params);
           items.value = data || [];
         }
-      } else {
+      } else if (q) {
         mode.value = "search";
 
         const params = buildParams({
@@ -91,6 +102,18 @@ export function useVacancies() {
         });
 
         const data = await vacanciesApi.search(params);
+        items.value = data || [];
+      } else {
+        mode.value = "all";
+
+        const params = buildParams({
+          query: "",
+          filters,
+          cursor: null,
+          limit,
+        });
+
+        const data = await vacanciesApi.getAll(params);
         items.value = data || [];
       }
 

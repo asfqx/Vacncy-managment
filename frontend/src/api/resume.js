@@ -27,6 +27,10 @@ export const resumeApi = {
     return http.post("/api/v1/resumes", payload).then((r) => r.data);
   },
 
+  delete(uuid) {
+    return http.delete(`/api/v1/resumes/${uuid}`).then((r) => r.data);
+  },
+
   createEducation(resumeUuid, payload) {
     return http.post(`/api/v1/resumes/${resumeUuid}/educations`, payload).then((r) => r.data);
   },

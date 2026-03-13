@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page">
     <div class="pageGlow pageGlow--blue"></div>
     <div class="pageGlow pageGlow--coral"></div>
@@ -54,27 +54,6 @@
           </div>
         </section>
 
-        <section v-if="contactItems.length" class="panel">
-          <div class="sectionHeader">
-            <p class="eyebrow">Контакты</p>
-            <h2 class="h2">Как связаться с кандидатом</h2>
-          </div>
-
-          <div class="contactGrid">
-            <a
-              v-for="item in contactItems"
-              :key="item.label"
-              class="contactCard"
-              :href="item.href"
-              :target="item.external ? '_blank' : undefined"
-              :rel="item.external ? 'noreferrer' : undefined"
-            >
-              <span class="contactCard__label">{{ item.label }}</span>
-              <strong class="contactCard__value">{{ item.value }}</strong>
-            </a>
-          </div>
-        </section>
-
         <section class="panel">
           <div class="sectionHeader">
             <p class="eyebrow">Опыт работы</p>
@@ -107,7 +86,7 @@
               <div class="timelineCard__head">
                 <div>
                   <h3 class="h3">{{ item.institution }}</h3>
-                  <p class="mutedText">{{ educationLevelLabel(item.level) }}<span v-if="item.specialization"> · {{ item.specialization }}</span></p>
+                  <p class="mutedText">{{ educationLevelLabel(item.level) }}<span v-if="item.specialization"> • {{ item.specialization }}</span></p>
                 </div>
                 <span class="softBadge">{{ formatPeriod(item.start_date, item.end_date, item.is_current) }}</span>
               </div>
@@ -185,38 +164,6 @@ const ageLabel = computed(() => {
   if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < birthDate.getDate())) age -= 1;
   return `${age} лет`;
 });
-const contactItems = computed(() => {
-  const items = [];
-
-  if (resume.value?.email) {
-    items.push({
-      label: "Email",
-      value: resume.value.email,
-      href: `mailto:${resume.value.email}`,
-      external: false,
-    });
-  }
-
-  if (resume.value?.telegram) {
-    items.push({
-      label: "Telegram",
-      value: formatTelegramLabel(resume.value.telegram),
-      href: normalizeTelegramLink(resume.value.telegram),
-      external: true,
-    });
-  }
-
-  if (resume.value?.phone_number) {
-    items.push({
-      label: "Телефон",
-      value: resume.value.phone_number,
-      href: `tel:${resume.value.phone_number}`,
-      external: false,
-    });
-  }
-
-  return items;
-});
 
 function goBack() {
   router.back();
@@ -258,24 +205,6 @@ function formatPeriod(startDate, endDate, isCurrent) {
 
 function educationLevelLabel(value) {
   return educationLabels[value] || value || "Не указано";
-}
-
-function normalizeTelegramLink(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "#";
-  if (/^https?:\/\//i.test(raw)) return raw;
-  const username = raw.replace(/^@/, "");
-  return `https://t.me/${username}`;
-}
-
-function formatTelegramLabel(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "Telegram";
-  if (/^https?:\/\//i.test(raw)) {
-    const username = raw.split("t.me/")[1] || raw;
-    return username.startsWith("@") ? username : `@${username.replace(/^@/, "")}`;
-  }
-  return raw.startsWith("@") ? raw : `@${raw}`;
 }
 
 async function loadResume() {
@@ -487,15 +416,13 @@ onMounted(loadResume);
   max-width: 760px;
 }
 
-.metaGrid,
-.contactGrid {
+.metaGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.metaTile,
-.contactCard {
+.metaTile {
   display: grid;
   gap: 6px;
   padding: 16px;
@@ -504,28 +431,11 @@ onMounted(loadResume);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.contactCard {
-  text-decoration: none;
-  color: #eaeaf0;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.contactCard:hover {
-  transform: translateY(-1px);
-  border-color: rgba(47, 115, 255, 0.34);
-  background: rgba(47, 115, 255, 0.08);
-}
-
-.metaTile__label,
-.contactCard__label {
+.metaTile__label {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.55);
-}
-
-.contactCard__value {
-  word-break: break-word;
 }
 
 .badge,
@@ -614,8 +524,7 @@ onMounted(loadResume);
     align-items: flex-start;
   }
 
-  .metaGrid,
-  .contactGrid {
+  .metaGrid {
     grid-template-columns: 1fr;
   }
 
