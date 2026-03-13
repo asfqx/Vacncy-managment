@@ -1,10 +1,10 @@
-﻿import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "./views/LoginView.vue";
 import RegisterView from "./views/RegisterView.vue";
 import RegisterRoleSelectView from "./views/RegisterRoleSelectView.vue";
 import EmailConfirmView from "./views/EmailConfirmView.vue";
 import HomeView from "./views/HomeView.vue";
-import EmployerHomeView from "./views/EmployerHomeView.vue";
+import EmployerResumesView from "./views/EmployerResumesView.vue";
 import CandidateApplicationsView from "./views/CandidateApplicationsView.vue";
 import CandidateResumeView from "./views/CandidateResumeView.vue";
 import EmployerApplicationsView from "./views/EmployerApplicationsView.vue";
@@ -14,6 +14,7 @@ import ProfileView from "./views/ProfileView.vue";
 import PasswordResetRequestView from "./views/PasswordResetRequestView.vue";
 import PasswordResetConfirmView from "./views/PasswordResetConfirmView.vue";
 import VacancyView from "./views/VacancyView.vue";
+import ResumeView from "./views/ResumeView.vue";
 import SharedHomeView from "./views/SharedHomeView.vue";
 import { getAccessToken, getDefaultRouteForRole, getUserRoleFromToken, USER_ROLES } from "./utils/auth";
 
@@ -45,13 +46,19 @@ const router = createRouter({
       path: "/vacancies",
       name: "candidate-vacancies",
       component: HomeView,
-      meta: { requiresAuth: true, roles: candidateSearchRoles },
+      meta: { requiresAuth: true, roles: sharedRoles },
     },
     {
       path: "/vacancies/:uuid",
       name: "vacancy",
       component: VacancyView,
-      meta: { requiresAuth: true, roles: candidateSearchRoles },
+      meta: { requiresAuth: true, roles: sharedRoles },
+    },
+    {
+      path: "/resumes/:uuid",
+      name: "resume",
+      component: ResumeView,
+      meta: { requiresAuth: true, roles: sharedRoles },
     },
     {
       path: "/candidate/applications",
@@ -68,7 +75,7 @@ const router = createRouter({
     {
       path: "/employer/resumes",
       name: "employer-resumes",
-      component: EmployerHomeView,
+      component: EmployerResumesView,
       meta: { requiresAuth: true, roles: employerRoles },
     },
     {

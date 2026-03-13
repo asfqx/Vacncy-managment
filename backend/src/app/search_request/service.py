@@ -10,8 +10,8 @@ from app.users.repository import UserRepository
 from app.enum import UserRole
 from app.core import AsyncSessionLocal
 
-from app.vacancy.models.search_request import SearchRequest
-from app.vacancy.repositories.search_request import SearchRequestRepository
+from .model import SearchRequest
+from .repository import SearchRequestRepository
 
 
 class SearchRequestService:

@@ -1,4 +1,4 @@
-﻿from uuid import UUID
+from uuid import UUID
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -25,6 +25,8 @@ class GetUserProfileResponse(BaseModel):
     status: str
     email_confirmed: bool
     avatar_url: str | None = None
+    telegram: str | None = None
+    phone_number: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     last_login_at: datetime | None = None
@@ -36,6 +38,8 @@ class UpdateUserProfileRequest(BaseModel):
     email: EmailStr | None = None
     fio: str | None = None
     avatar_url: str | None = None
+    telegram: str | None = None
+    phone_number: str | None = None
 
 
 class UpdateUserProfileResponse(BaseModel):
@@ -44,6 +48,8 @@ class UpdateUserProfileResponse(BaseModel):
     email: EmailStr
     fio: str
     avatar_url: str | None = None
+    telegram: str | None = None
+    phone_number: str | None = None
 
 
 class CreateQR2FAResponse(BaseModel):

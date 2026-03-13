@@ -82,16 +82,7 @@ async function onSubmit() {
 .form { display: grid; gap: 12px; }
 .success { margin: 6px 0 0; color: #7cff9b; font-size: 15px; }
 .error { margin: 6px 0 0; color: #ff6b6b; font-size: 15px; }
-.hint {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 15px;
-  color: rgba(232, 232, 232, 0.75);
-}
-.link {
-  color: #ffffff;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(255,255,255,0.35);
-}
+.hint { margin-top: 10px; text-align: center; font-size: 15px; color: rgba(232, 232, 232, 0.75); }
+.link { color: #ffffff; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.35); }
 .link:hover { border-bottom-color: rgba(255,255,255,0.9); }
 </style>

@@ -74,6 +74,20 @@
               Размер команды: {{ company.company_size ? `${company.company_size} сотрудников` : "не указан" }}
             </div>
 
+            <div v-if="companyContactItems.length" class="contactList">
+              <a
+                v-for="item in companyContactItems"
+                :key="item.label"
+                class="contactItem"
+                :href="item.href"
+                :target="item.external ? '_blank' : undefined"
+                :rel="item.external ? 'noreferrer' : undefined"
+              >
+                <span class="contactItem__label">{{ item.label }}</span>
+                <strong class="contactItem__value">{{ item.value }}</strong>
+              </a>
+            </div>
+
             <div class="divider"></div>
 
             <div class="infoTile">
@@ -109,6 +123,38 @@ const role = getUserRoleFromToken();
 const canApply = computed(() => isCandidateRole(role));
 const companyAvatarSrc = computed(() => buildAvatarUrl(company.value?.avatar_url));
 const companyAvatarLetter = computed(() => String(company.value?.title || "К").trim().slice(0, 1).toUpperCase());
+const companyContactItems = computed(() => {
+  const items = [];
+
+  if (company.value?.email) {
+    items.push({
+      label: "Email",
+      value: company.value.email,
+      href: `mailto:${company.value.email}`,
+      external: false,
+    });
+  }
+
+  if (company.value?.telegram) {
+    items.push({
+      label: "Telegram",
+      value: formatTelegramLabel(company.value.telegram),
+      href: normalizeTelegramLink(company.value.telegram),
+      external: true,
+    });
+  }
+
+  if (company.value?.phone_number) {
+    items.push({
+      label: "Телефон",
+      value: company.value.phone_number,
+      href: `tel:${company.value.phone_number}`,
+      external: false,
+    });
+  }
+
+  return items;
+});
 
 function buildAvatarUrl(objectName) {
   if (!objectName) return "";
@@ -136,6 +182,24 @@ function formatDate(iso) {
   } catch {
     return iso;
   }
+}
+
+function normalizeTelegramLink(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "#";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const username = raw.replace(/^@/, "");
+  return `https://t.me/${username}`;
+}
+
+function formatTelegramLabel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "Telegram";
+  if (/^https?:\/\//i.test(raw)) {
+    const username = raw.split("t.me/")[1] || raw;
+    return username.startsWith("@") ? username : `@${username.replace(/^@/, "")}`;
+  }
+  return raw.startsWith("@") ? raw : `@${raw}`;
 }
 
 async function loadCompany(companyId) {
@@ -317,6 +381,36 @@ onMounted(loadVacancy);
   box-shadow: 0 10px 22px rgba(47,115,255,0.22);
 }
 .companyPanel { gap: 16px; }
+.contactList {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+.contactItem {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: #eaeaf0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.contactItem:hover {
+  transform: translateY(-1px);
+  border-color: rgba(47,115,255,0.34);
+  background: rgba(47,115,255,0.08);
+}
+.contactItem__label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.56);
+}
+.contactItem__value {
+  word-break: break-word;
+}
 .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0 4px; }
 .infoTile { padding: 4px 0 0; display: grid; gap: 10px; }
 .error { color: #ff7d7d; font-size: 15px; margin: 0 auto; max-width: 1180px; position: relative; z-index: 1; }

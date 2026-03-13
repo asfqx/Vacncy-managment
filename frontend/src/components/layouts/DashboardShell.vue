@@ -1,5 +1,5 @@
-<template>
-  <div class="page">
+﻿<template>
+  <div class="page" :class="pageClass">
     <header class="topbar">
       <div class="topbar__left">
         <RouterLink class="logo" :to="homePath">vm</RouterLink>
@@ -27,12 +27,12 @@
         </RouterLink>
 
         <RouterLink class="avatar" :to="profilePath">
-          <img v-if="avatarImageSrc" :src="avatarImageSrc" alt="Аватар" class="avatar__image" />
+          <img v-if="avatarImageSrc" :src="avatarImageSrc" :alt="avatarAlt" class="avatar__image" />
           <span v-else>{{ avatarLetterValue }}</span>
         </RouterLink>
 
         <button class="logout" type="button" @click="onLogout">
-          Выйти
+          {{ logoutLabel }}
         </button>
       </div>
     </header>
@@ -89,6 +89,10 @@ const props = defineProps({
     type: String,
     default: "/profile",
   },
+  backgroundVariant: {
+    type: String,
+    default: "default",
+  },
 });
 
 const route = useRoute();
@@ -102,6 +106,11 @@ const avatarLetterValue = computed(() => {
 });
 
 const avatarImageSrc = computed(() => buildAvatarUrl(profile.value?.avatar_url));
+const pageClass = computed(() => ({
+  "page--solid": props.backgroundVariant === "solid",
+}));
+const avatarAlt = "\u0410\u0432\u0430\u0442\u0430\u0440";
+const logoutLabel = "\u0412\u044b\u0439\u0442\u0438";
 
 function buildAvatarUrl(objectName) {
   if (!objectName) return "";
@@ -133,10 +142,13 @@ onMounted(loadProfile);
 .page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(47, 115, 255, 0.22), transparent 28%),
-    radial-gradient(circle at top right, rgba(255, 91, 91, 0.18), transparent 24%),
-    #0b0c10;
+    radial-gradient(circle at 0% 24%, rgba(19, 58, 145, 0.3), transparent 26%),
+    radial-gradient(circle at 100% 0%, rgba(118, 24, 33, 0.12), transparent 16%),
+    linear-gradient(180deg, rgba(6, 8, 14, 0.995), rgba(4, 6, 10, 1));
   color: #eaeaf0;
+}
+.page--solid {
+  background: linear-gradient(180deg, rgba(6, 8, 14, 0.995), rgba(4, 6, 10, 1));
 }
 .topbar {
   position: sticky;
@@ -241,3 +253,6 @@ onMounted(loadProfile);
   .layout { grid-template-columns: 1fr; }
 }
 </style>
+
+
+

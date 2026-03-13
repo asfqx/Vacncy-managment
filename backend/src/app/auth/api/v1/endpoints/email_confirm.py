@@ -1,8 +1,4 @@
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    status,
-)
+﻿from fastapi import APIRouter, BackgroundTasks, status
 from pydantic import EmailStr
 
 from app.auth.query_param import TokenQueryParam
@@ -18,23 +14,20 @@ router = APIRouter(prefix="/email-confirm")
 @router.post(
     "/request",
     status_code=status.HTTP_202_ACCEPTED,
-    summary="Запрос на подтверждение почты",
+    summary="Запросить подтверждение email",
     description=(
-        "Отправляет пользователю письмо для подтверждения почты.\n\n"
-        "Параметры:\n"
-        "- **email** — email пользователя.\n\n"
+        "Отправляет письмо с токеном для подтверждения электронной почты пользователя."
     ),
     responses={
         202: {
-            "description": "Запрос на подтверждение почты успешно принят.",
-            "model": None,
+            "description": "Запрос на подтверждение почты успешно принят",
         },
         429: {
-            "description": "Превышен лимит запросов.",
+            "description": "Превышен лимит запросов",
             "model": RateLimitErrorResponse,
         },
         500: {
-            "description": "Внутренняя ошибка сервера.",
+            "description": "Внутренняя ошибка сервера",
             "model": error_schemas.InternalServerErrorResponse,
         },
     },
@@ -44,29 +37,32 @@ async def email_confirm_request(
     background: BackgroundTasks,
     session: DBSession,
 ) -> None:
-
     await EmailConfirmService.send_token(email, background, session)
 
 
 @router.post(
     "/confirm",
     status_code=status.HTTP_200_OK,
-    summary="Подтверждение почты",
+    summary="Подтвердить email",
     description=(
-        "Подтверждает почту по токену, полученному на email пользователя, "
-        "Параметры:\n"
-        "- **email** — email пользователя.\n"
-        "- **token** — токен, полученный на email, для подтверждения почты.\n\n"
+        "Подтверждает адрес электронной почты по токену, полученному пользователем на email."
     ),
     responses={
         200: {
-            "description": "Почта успешно подтверждена.",
-            "model": None,
+            "description": "Почта успешно подтверждена",
+        },
+        400: {
+            "description": "Токен подтверждения некорректен или просрочен",
+            "model": error_schemas.BadRequestErrorResponse,
+        },
+        404: {
+            "description": "Пользователь не найден",
+            "model": error_schemas.NotFoundErrorResponse,
         },
         500: {
-            "description": "Внутренняя ошибка сервера.",
+            "description": "Внутренняя ошибка сервера",
             "model": error_schemas.InternalServerErrorResponse,
-        }
+        },
     },
 )
 async def email_confirm(
@@ -74,5 +70,4 @@ async def email_confirm(
     token: TokenQueryParam,
     session: DBSession,
 ) -> None:
-
     await EmailConfirmService.confirm_token(data.email, token, session)

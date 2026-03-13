@@ -59,8 +59,8 @@ export function getDefaultRouteForRole(role) {
 }
 
 export function getRoleLabel(role) {
-  if (isAdminRole(role)) return "Администратор";
-  if (isEmployerRole(role)) return "Работодатель";
-  if (isCandidateRole(role)) return "Кандидат";
-  return "Пользователь";
+  if (isAdminRole(role)) return "\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440";
+  if (isEmployerRole(role)) return "\u0420\u0430\u0431\u043e\u0442\u043e\u0434\u0430\u0442\u0435\u043b\u044c";
+  if (isCandidateRole(role)) return "\u041a\u0430\u043d\u0434\u0438\u0434\u0430\u0442";
+  return "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c";
 }

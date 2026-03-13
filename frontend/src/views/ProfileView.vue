@@ -55,9 +55,24 @@
             <form class="formGrid" @submit.prevent="submitProfile">
               <label class="field field--wide">
                 <span>Email</span>
-                <input v-model="form.email" class="input" type="email" placeholder="you@example.com" />
+                <div class="inputActionWrap">
+                  <input
+                    v-model="form.email"
+                    class="input input--withAction"
+                    type="email"
+                    placeholder="you@example.com"
+                  />
+                  <button
+                    v-if="profile && !profile.email_confirmed"
+                    class="inputActionBtn"
+                    type="button"
+                    :disabled="emailConfirmLoading || !form.email.trim()"
+                    @click="requestEmailConfirmation"
+                  >
+                    {{ emailConfirmLoading ? "\u041e\u0442\u043f\u0440\u0430\u0432\u043a\u0430..." : "\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c \u043f\u043e\u0447\u0442\u0443" }}
+                  </button>
+                </div>
               </label>
-
               <label class="field">
                 <span>Username</span>
                 <input v-model="form.username" class="input" type="text" placeholder="username" />
@@ -441,19 +456,34 @@ async function startPasswordReset() {
   passwordLoading.value = true;
   formError.value = "";
   successMessage.value = "";
-
   try {
     await authApi.passwordResetRequest(profile.value.email);
     await router.push({ path: "/password-reset/confirm", query: { email: profile.value.email } });
   } catch (e) {
     const status = e?.response?.status;
-    if (status === 429) formError.value = "Слишком часто. Попробуйте позже.";
-    else formError.value = "Не удалось запустить обновление пароля.";
+    if (status === 429) formError.value = "\u0421\u043b\u0438\u0448\u043a\u043e\u043c \u0447\u0430\u0441\u0442\u043e. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043f\u043e\u0437\u0436\u0435.";
+    else formError.value = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u0430\u0440\u043e\u043b\u044f.";
   } finally {
     passwordLoading.value = false;
   }
 }
-
+async function requestEmailConfirmation() {
+  emailConfirmLoading.value = true;
+  formError.value = "";
+  successMessage.value = "";
+  try {
+    const email = form.email.trim();
+    await authApi.emailConfirmRequest(email);
+    await router.push({ path: "/email-confirm", query: { email } });
+  } catch (e) {
+    const status = e?.response?.status;
+    if (status === 429) formError.value = "\u0421\u043b\u0438\u0448\u043a\u043e\u043c \u0447\u0430\u0441\u0442\u043e. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043f\u043e\u0437\u0436\u0435.";
+    else if (status === 400) formError.value = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u0435 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e email.";
+    else formError.value = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043f\u0438\u0441\u044c\u043c\u043e \u0434\u043b\u044f \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f \u043f\u043e\u0447\u0442\u044b.";
+  } finally {
+    emailConfirmLoading.value = false;
+  }
+}
 onMounted(loadProfile);
 </script>
 
@@ -560,7 +590,15 @@ onMounted(loadProfile);
 .field--full,
 .formActions { grid-column: 1 / -1; }
 .field span { color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; }
+.inputActionWrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
 .input {
+  width: 100%;
+  box-sizing: border-box;
   min-height: 52px;
   border-radius: 16px;
   padding: 0 16px;
@@ -570,8 +608,35 @@ onMounted(loadProfile);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
+.input--withAction {
+  min-width: 0;
+  padding-right: 186px;
+}
 .input:focus { border-color: rgba(47, 115, 255, 0.6); box-shadow: 0 0 0 4px rgba(47, 115, 255, 0.14); }
 .input--textarea { min-height: 136px; padding: 14px 16px; resize: vertical; }
+.inputActionBtn {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  bottom: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 0 12px;
+  border: 1px solid rgba(47, 115, 255, 0.35);
+  background: linear-gradient(135deg, rgba(47, 115, 255, 0.95), rgba(90, 147, 255, 0.95));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 1;
+}
+.inputActionBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
 .formActions { display: flex; justify-content: flex-start; padding-top: 6px; }
 .primaryBtn,
 .secondaryBtn {
@@ -613,6 +678,12 @@ onMounted(loadProfile);
   .panelIntro { flex-direction: column; align-items: flex-start; }
   .heroCard__statusWrap { justify-content: flex-start; }
   .formGrid { grid-template-columns: 1fr; }
+  .input--withAction { padding-right: 16px; }
+  .inputActionWrap { display: grid; gap: 8px; }
+  .inputActionBtn {
+    position: static;
+    width: 100%;
+  }
   .field--wide,
   .field--full,
   .formActions { grid-column: auto; }

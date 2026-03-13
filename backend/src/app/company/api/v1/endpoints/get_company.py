@@ -16,12 +16,33 @@ router = APIRouter()
 @router.get(
     "/me/",
     status_code=status.HTTP_200_OK,
+    summary="Получить мою компанию",
+    description=(
+        "Возвращает компанию текущего авторизованного работодателя. "
+        "Требуется JWT access-токен в заголовке Authorization."
+    ),
     response_model=CompanyResponse,
     responses={
-        401: {"model": error_schemas.UnauthorizedErrorResponse},
-        404: {"model": error_schemas.NotFoundErrorResponse},
-        429: {"model": RateLimitErrorResponse},
-        500: {"model": error_schemas.InternalServerErrorResponse},
+        200: {
+            "description": "Компания успешно получена",
+            "model": CompanyResponse,
+        },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
+        404: {
+            "description": "Компания не найдена",
+            "model": error_schemas.NotFoundErrorResponse,
+        },
+        429: {
+            "description": "Превышен лимит запросов",
+            "model": RateLimitErrorResponse,
+        },
+        500: {
+            "description": "Внутренняя ошибка сервера",
+            "model": error_schemas.InternalServerErrorResponse,
+        },
     },
 )
 async def get_mine(
@@ -34,12 +55,33 @@ async def get_mine(
 @router.post(
     "/me/",
     status_code=status.HTTP_201_CREATED,
+    summary="Создать мою компанию",
+    description=(
+        "Создает компанию для текущего авторизованного работодателя. "
+        "Требуется JWT access-токен в заголовке Authorization."
+    ),
     response_model=CompanyResponse,
     responses={
-        401: {"model": error_schemas.UnauthorizedErrorResponse},
-        409: {"model": error_schemas.AlreadyExistErrorResponse},
-        429: {"model": RateLimitErrorResponse},
-        500: {"model": error_schemas.InternalServerErrorResponse},
+        201: {
+            "description": "Компания успешно создана",
+            "model": CompanyResponse,
+        },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
+        409: {
+            "description": "Компания для пользователя уже существует",
+            "model": error_schemas.AlreadyExistErrorResponse,
+        },
+        429: {
+            "description": "Превышен лимит запросов",
+            "model": RateLimitErrorResponse,
+        },
+        500: {
+            "description": "Внутренняя ошибка сервера",
+            "model": error_schemas.InternalServerErrorResponse,
+        },
     },
 )
 async def create_mine(
@@ -53,13 +95,37 @@ async def create_mine(
 @router.patch(
     "/me/",
     status_code=status.HTTP_200_OK,
+    summary="Обновить мою компанию",
+    description=(
+        "Обновляет данные компании текущего авторизованного работодателя. "
+        "Требуется JWT access-токен в заголовке Authorization."
+    ),
     response_model=CompanyResponse,
     responses={
-        401: {"model": error_schemas.UnauthorizedErrorResponse},
-        404: {"model": error_schemas.NotFoundErrorResponse},
-        409: {"model": error_schemas.AlreadyExistErrorResponse},
-        429: {"model": RateLimitErrorResponse},
-        500: {"model": error_schemas.InternalServerErrorResponse},
+        200: {
+            "description": "Компания успешно обновлена",
+            "model": CompanyResponse,
+        },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
+        404: {
+            "description": "Компания не найдена",
+            "model": error_schemas.NotFoundErrorResponse,
+        },
+        409: {
+            "description": "Конфликт при обновлении компании",
+            "model": error_schemas.AlreadyExistErrorResponse,
+        },
+        429: {
+            "description": "Превышен лимит запросов",
+            "model": RateLimitErrorResponse,
+        },
+        500: {
+            "description": "Внутренняя ошибка сервера",
+            "model": error_schemas.InternalServerErrorResponse,
+        },
     },
 )
 async def update_mine(
@@ -73,12 +139,33 @@ async def update_mine(
 @router.get(
     "/{company_uuid}/",
     status_code=status.HTTP_200_OK,
+    summary="Получить компанию по UUID",
+    description=(
+        "Возвращает публичную информацию о компании по ее UUID. "
+        "Требуется JWT access-токен в заголовке Authorization."
+    ),
     response_model=CompanyResponse,
     responses={
-        401: {"model": error_schemas.UnauthorizedErrorResponse},
-        404: {"model": error_schemas.NotFoundErrorResponse},
-        429: {"model": RateLimitErrorResponse},
-        500: {"model": error_schemas.InternalServerErrorResponse},
+        200: {
+            "description": "Компания успешно получена",
+            "model": CompanyResponse,
+        },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
+        404: {
+            "description": "Компания не найдена",
+            "model": error_schemas.NotFoundErrorResponse,
+        },
+        429: {
+            "description": "Превышен лимит запросов",
+            "model": RateLimitErrorResponse,
+        },
+        500: {
+            "description": "Внутренняя ошибка сервера",
+            "model": error_schemas.InternalServerErrorResponse,
+        },
     },
 )
 async def get_by_id(

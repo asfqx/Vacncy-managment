@@ -1,5 +1,5 @@
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class CompanyCreateRequest(BaseModel):
@@ -30,6 +30,9 @@ class CompanyResponse(BaseModel):
     company_size: int 
     website: str 
     avatar_url: str | None = None
+    email: EmailStr | None = None
+    telegram: str | None = None
+    phone_number: str | None = None
 
     model_config = {
         "from_attributes": True,

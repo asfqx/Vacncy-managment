@@ -23,7 +23,7 @@ class UserService:
         current_user: User,
         session: AsyncSession,
     ) -> User:
-
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -42,7 +42,7 @@ class UserService:
         current_user: User,
         session: AsyncSession,
     ) -> dict[str, Any]:
-
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
@@ -60,7 +60,7 @@ class UserService:
                 if user_with_same_email and user_with_same_email.uuid != exist_user.uuid:
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
-                        detail="Email уже используется",
+                        detail="Email уже существует",
                     )
 
                 new_bio.email = normalized_email
@@ -71,7 +71,7 @@ class UserService:
             if not exists:
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST,
-                    detail="Неправильный avatar_url",
+                    detail="������������ avatar_url",
                 )
 
         updated_data = await UserRepository.update(exist_user, new_bio, session)
@@ -81,6 +81,8 @@ class UserService:
             "email": updated_data.email,
             "fio": updated_data.fio,
             "avatar_url": updated_data.avatar_url,
+            "telegram": updated_data.telegram,
+            "phone_number": updated_data.phone_number,
         }
 
     @staticmethod
@@ -89,7 +91,7 @@ class UserService:
     async def upload_avatar(
         user: AuthenticatedActiveUser,
     ) -> dict[str, str]:
-
+        
         url = s3_adapter.get_presigned_url(
             bucket_name=AVATARS_BUCKET,
             object_name=f"{user.uuid}/{uuid4()}.png",

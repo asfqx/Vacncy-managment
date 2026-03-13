@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ class CompanyService:
     async def _serialize_company(
         company: Company,
         session: AsyncSession,
-    ) -> dict:
+    ) -> dict[str, Any]:
         owner = await UserRepository.get(company.user_uuid, session)
 
         return {
@@ -29,6 +30,9 @@ class CompanyService:
             "company_size": company.company_size,
             "website": company.website,
             "avatar_url": owner.avatar_url if owner else None,
+            "email": owner.email if owner else None,
+            "telegram": owner.telegram if owner else None,
+            "phone_number": owner.phone_number if owner else None,
         }
 
     @staticmethod
@@ -37,19 +41,20 @@ class CompanyService:
     async def get_company(
         current_user: User,
         session: AsyncSession,
-    ) -> dict:
+    ) -> dict[str, Any]:
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                detail="Пользователь не найден",
+                detail="Пользователь не найден ",
             )
 
         if exist_user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail="Кандидат не может иметь компанию",
+                detail="У вас нет прав иметь вакансию",
             )
 
         company = await CompanyRepository.get_by_user(exist_user.uuid, session)
@@ -69,13 +74,14 @@ class CompanyService:
         new_bio: CompanyUpdateRequest,
         current_user: User,
         session: AsyncSession,
-    ) -> dict:
+    ) -> dict[str, Any]:
+        
         exist_user = await UserRepository.get(current_user.uuid, session)
 
         if not exist_user:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                detail="Пользователь не найден",
+                detail="Пользователя не существует",
             )
 
         company = await CompanyRepository.get_by_user(current_user.uuid, session)
@@ -104,18 +110,19 @@ class CompanyService:
         user: User,
         data: CompanyCreateRequest,
         session: AsyncSession,
-    ) -> dict:
+    ) -> dict[str, Any]:
+        
         if user.role == UserRole.CANDIDATE:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail="Вы не можете создать компанию",
+                detail="У вас нет прав создавать компанию",
             )
 
         existing_company_by_user = await CompanyRepository.get_by_user(user.uuid, session)
         if existing_company_by_user:
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                detail="У пользователя уже есть компания",
+                detail="У вас уже есть компания",
             )
 
         company_with_same_title = await CompanyRepository.get_by_title(data.title, session)
@@ -142,13 +149,14 @@ class CompanyService:
     async def get_company_by_id(
         company_id: UUID,
         session: AsyncSession,
-    ) -> dict:
+    ) -> dict[str, Any]:
+        
         company = await CompanyRepository.get(company_id, session)
 
         if not company:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
-                detail="Такой компании не существует",
+                detail="Компания не найдена",
             )
 
         return await CompanyService._serialize_company(company, session)

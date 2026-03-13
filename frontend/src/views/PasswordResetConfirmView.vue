@@ -46,9 +46,7 @@
       <p v-if="pwdError" class="error">{{ pwdError }}</p>
 
       <p class="hint-center">
-        <button class="link-btn" type="button" @click="backToToken">
-          Назад к коду
-        </button>
+        <button class="link-btn" type="button" @click="backToToken">Назад к коду</button>
       </p>
     </form>
   </AuthCard>
@@ -147,13 +145,6 @@ function backToToken() {
 .success { margin: 6px 0 0; color: #7cff9b; font-size: 15px; }
 .error { margin: 6px 0 0; color: #ff6b6b; font-size: 15px; }
 .hint-center { margin-top: 10px; text-align: center; }
-.link-btn {
-  border: none;
-  background: transparent;
-  color: #ffffff;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.35);
-  padding: 0;
-}
+.link-btn { border: none; background: transparent; color: #ffffff; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.35); padding: 0; }
 .link-btn:hover { border-bottom-color: rgba(255,255,255,0.9); }
 </style>

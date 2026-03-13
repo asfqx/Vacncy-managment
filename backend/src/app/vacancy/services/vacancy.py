@@ -9,11 +9,10 @@ from app.enum import UserRole
 from app.error_handler import handle_connection_errors, handle_model_errors
 from app.users.model import User
 from app.vacancy.filter import VacancyFilterDepends, VacancyFilterQueryParams
-from app.vacancy.models.vacancy import Vacancy
-from app.vacancy.repositories.vacancy import VacancyRepository
-from app.vacancy.schemas.vacancy import VacancyCreateRequest, VacancyUpdateRequest
-
-from .search_request import SearchRequestService
+from app.vacancy.model import Vacancy
+from app.vacancy.repository import VacancyRepository
+from app.vacancy.schema import VacancyCreateRequest, VacancyUpdateRequest
+from app.search_request.service import SearchRequestService
 
 
 class VacancyService:
@@ -28,6 +27,7 @@ class VacancyService:
         background: BackgroundTasks,
         session: AsyncSession,
     ) -> Sequence[Vacancy]:
+        
         vacancies = await VacancyRepository.search(vacancy_name, filters, session)
 
         if not vacancies:
@@ -143,3 +143,29 @@ class VacancyService:
             )
 
         return vacancy
+
+    @staticmethod
+    @handle_model_errors
+    @handle_connection_errors
+    async def delete(
+        user_uuid: UUID,
+        vacancy_uuid: UUID,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        vacancy = await VacancyRepository.get(vacancy_uuid, session)
+
+        if not vacancy:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                "Такой вакансии не существует",
+            )
+
+        company = await CompanyRepository.get_by_user(user_uuid, session)
+        if not company or vacancy.company_id != company.uuid:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "Вы не можете удалить эту вакансию",
+            )
+
+        return await VacancyRepository.soft_delete(vacancy, session)

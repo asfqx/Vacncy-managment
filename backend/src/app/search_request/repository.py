@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.vacancy.models.search_request import SearchRequest
+from .model import SearchRequest
 
 
 class SearchRequestRepository:

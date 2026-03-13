@@ -42,3 +42,7 @@ class User(Base):
     )
     
     avatar_url: Mapped[str | None] = mapped_column(String(512))
+    
+    telegram: Mapped[str | None] = mapped_column(String(255))
+    
+    phone_number: Mapped[str | None] = mapped_column(String(32))

@@ -13,9 +13,7 @@
       <article class="panel introPanel">
         <p class="eyebrow">Вакансия</p>
         <h2 class="title">Новая публикация</h2>
-        <p class="lead">
-          Укажите роль, формат работы и коротко опишите задачи.
-        </p>
+        <p class="lead">Укажите роль, формат работы и коротко опишите задачи.</p>
 
         <div class="tips">
           <div class="tipCard">
@@ -29,14 +27,6 @@
           <div class="tipCard">
             <strong>Покажите контекст</strong>
             <span>Напишите, какой продукт строит команда и над чем человек будет работать в первые месяцы.</span>
-          </div>
-          <div class="tipCard">
-            <strong>Не перегружайте список требований</strong>
-            <span>Оставьте только действительно важные пункты, чтобы не оттолкнуть сильных кандидатов.</span>
-          </div>
-          <div class="tipCard">
-            <strong>Обозначьте диапазон зарплаты</strong>
-            <span>Когда условия прозрачны, подходящие специалисты откликаются заметно охотнее.</span>
           </div>
         </div>
       </article>
@@ -67,32 +57,13 @@
           </label>
 
           <div class="toggleRow">
-            <button
-              class="toggle"
-              :class="{ active: !form.remote }"
-              type="button"
-              @click="form.remote = false"
-            >
-              Офис / гибрид
-            </button>
-            <button
-              class="toggle"
-              :class="{ active: form.remote }"
-              type="button"
-              @click="form.remote = true"
-            >
-              Удаленно
-            </button>
+            <button class="toggle" :class="{ active: !form.remote }" type="button" @click="form.remote = false">Офис / гибрид</button>
+            <button class="toggle" :class="{ active: form.remote }" type="button" @click="form.remote = true">Удаленно</button>
           </div>
 
           <label class="field">
             <span>Город</span>
-            <input
-              v-model="form.city"
-              class="input"
-              type="text"
-              :placeholder="form.remote ? 'Можно не указывать' : 'Москва'"
-            />
+            <input v-model="form.city" class="input" type="text" :placeholder="form.remote ? 'Можно не указывать' : 'Москва'" />
           </label>
 
           <label class="field">
@@ -218,227 +189,34 @@ async function submitVacancy() {
 </script>
 
 <style scoped>
-.pageGrid {
-  display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.9fr);
-  gap: 18px;
-}
-
-.panel {
-  border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(18, 19, 27, 0.96), rgba(11, 12, 17, 0.98));
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
-}
-
-.introPanel,
-.formPanel {
-  padding: 24px;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: #8eb4ff;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.title {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.1;
-}
-
-.lead {
-  margin: 14px 0 0;
-  max-width: 42ch;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.7;
-}
-
-.tips {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.tipCard,
-.summaryBox {
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.tipCard strong,
-.summaryBox__title {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.tipCard span,
-.summaryBox__line {
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.6;
-}
-
-.panelHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 22px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(47, 115, 255, 0.14);
-  border: 1px solid rgba(47, 115, 255, 0.28);
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.vacancyForm {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-}
-
-.field--full,
-.summaryBox,
-.actions {
-  grid-column: 1 / -1;
-}
-
-.field--narrow {
-  max-width: 180px;
-}
-
-.field span {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.input {
-  min-height: 52px;
-  border-radius: 16px;
-  padding: 0 16px;
-  background: rgba(8, 10, 16, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #eef2ff;
-  outline: none;
-}
-
-.input:focus {
-  border-color: rgba(47, 115, 255, 0.6);
-  box-shadow: 0 0 0 4px rgba(47, 115, 255, 0.14);
-}
-
-.input--textarea {
-  min-height: 200px;
-  padding: 14px 16px;
-  resize: vertical;
-}
-
-.toggleRow {
-  grid-column: 1 / -1;
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.toggle {
-  min-height: 48px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.72);
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.toggle.active {
-  color: #fff;
-  border-color: rgba(47, 115, 255, 0.34);
-  background: rgba(47, 115, 255, 0.18);
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.primaryBtn {
-  min-height: 48px;
-  border-radius: 16px;
-  padding: 0 18px;
-  border: 1px solid rgba(47, 115, 255, 0.4);
-  background: linear-gradient(135deg, #2f73ff, #5a93ff);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 10px 22px rgba(47, 115, 255, 0.24);
-}
-
-.primaryBtn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.successText {
-  margin: 16px 0 0;
-  color: #91f2b0;
-}
-
-.errorText {
-  margin: 16px 0 0;
-  color: #ff9d9d;
-}
-
-@media (max-width: 1080px) {
-  .pageGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 780px) {
-  .panelHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .chip {
-    white-space: normal;
-  }
-
-  .vacancyForm,
-  .toggleRow {
-    grid-template-columns: 1fr;
-  }
-
-  .field--full,
-  .summaryBox,
-  .actions {
-    grid-column: auto;
-  }
-
-  .field--narrow {
-    max-width: none;
-  }
-}
+.pageGrid { display: grid; grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.9fr); gap: 18px; }
+.panel { border-radius: 26px; border: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(18,19,27,0.96), rgba(11,12,17,0.98)); box-shadow: 0 18px 44px rgba(0,0,0,0.24); }
+.introPanel, .formPanel { padding: 24px; }
+.eyebrow { margin: 0 0 10px; color: #8eb4ff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; }
+.title { margin: 0; font-size: 30px; line-height: 1.1; }
+.lead { margin: 14px 0 0; max-width: 42ch; color: rgba(255,255,255,0.72); line-height: 1.7; }
+.tips { display: grid; gap: 12px; margin-top: 20px; }
+.tipCard, .summaryBox { padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+.tipCard strong, .summaryBox__title { display: block; margin-bottom: 8px; }
+.tipCard span, .summaryBox__line { color: rgba(255,255,255,0.7); line-height: 1.6; }
+.panelHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.chip { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 8px 16px; border-radius: 999px; color: rgba(255,255,255,0.88); background: rgba(47,115,255,0.14); border: 1px solid rgba(47,115,255,0.28); text-align: center; line-height: 1.2; white-space: normal; }
+.vacancyForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.field { display: grid; gap: 8px; }
+.field--full, .summaryBox, .actions { grid-column: 1 / -1; }
+.field--narrow { max-width: 180px; }
+.field span { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; }
+.input { min-height: 52px; border-radius: 16px; padding: 0 16px; background: rgba(8,10,16,0.96); border: 1px solid rgba(255,255,255,0.08); color: #eef2ff; outline: none; }
+.input:focus { border-color: rgba(47,115,255,0.6); box-shadow: 0 0 0 4px rgba(47,115,255,0.14); }
+.input--textarea { min-height: 200px; padding: 14px 16px; resize: vertical; }
+.toggleRow { grid-column: 1 / -1; display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.toggle { min-height: 48px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.72); cursor: pointer; font-weight: 700; }
+.toggle.active { color: #fff; border-color: rgba(47,115,255,0.34); background: rgba(47,115,255,0.18); }
+.actions { display: flex; justify-content: flex-start; }
+.primaryBtn { min-height: 48px; border-radius: 16px; padding: 0 18px; border: 1px solid rgba(47,115,255,0.4); background: linear-gradient(135deg, #2f73ff, #5a93ff); color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 10px 22px rgba(47,115,255,0.24); }
+.primaryBtn:disabled { opacity: 0.65; cursor: not-allowed; }
+.successText { margin: 16px 0 0; color: #91f2b0; }
+.errorText { margin: 16px 0 0; color: #ff9d9d; }
+@media (max-width: 1080px) { .pageGrid { grid-template-columns: 1fr; } }
+@media (max-width: 780px) { .panelHeader { flex-direction: column; align-items: flex-start; } .vacancyForm, .toggleRow { grid-template-columns: 1fr; } .field--full, .summaryBox, .actions { grid-column: auto; } .field--narrow { max-width: none; } }
 </style>

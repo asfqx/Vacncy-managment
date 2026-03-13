@@ -34,7 +34,7 @@
     <PlaceholderPanel
       badge="Новая страница"
       title="Здесь будет поиск резюме"
-      description="Я добавил отдельную страницу для работодателя и сделал доступ к ней только после входа с ролью работодателя или администратора. Дальше сюда можно подключить API, фильтры и список найденных резюме."
+      description="Здесь можно развить отдельный сценарий для работодателя: подключить API, список найденных резюме, быстрые фильтры и рекомендации."
     />
   </DashboardShell>
 </template>
@@ -72,58 +72,16 @@ function clearAll() {
 </script>
 
 <style scoped>
-.panel {
-  padding: 18px;
-  border-radius: 24px;
-  background: rgba(15, 16, 22, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
+.panel { padding: 18px; border-radius: 24px; background: rgba(15,16,22,0.94); border: 1px solid rgba(255,255,255,0.1); }
 .searchPanel { display: grid; gap: 12px; }
 .searchRow { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
-.searchInputWrap {
-  height: 46px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-radius: 14px;
-  background: #0f1016;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.searchInput,
-.miniInput {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  color: #eaeaf0;
-  outline: none;
-  font-size: 16px;
-}
+.searchInputWrap { height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 14px; background: #0f1016; border: 1px solid rgba(255,255,255,0.1); }
+.searchInput, .miniInput { width: 100%; height: 100%; border: none; background: transparent; color: #eaeaf0; outline: none; font-size: 16px; }
 .searchIcon { opacity: 0.7; font-size: 14px; }
-.searchBtn,
-.ghostBtn {
-  height: 46px;
-  border-radius: 14px;
-  color: #fff;
-  cursor: pointer;
-}
-.searchBtn {
-  background: #2f73ff;
-  border: 1px solid rgba(47, 115, 255, 0.5);
-  font-weight: 800;
-}
+.searchBtn, .ghostBtn { height: 46px; border-radius: 14px; color: #fff; cursor: pointer; }
+.searchBtn { background: #2f73ff; border: 1px solid rgba(47,115,255,0.5); font-weight: 800; }
 .filtersLine { display: grid; grid-template-columns: 1fr 1fr 1fr 140px; gap: 10px; }
-.miniInput {
-  height: 42px;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: #0f1016;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.ghostBtn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.14); }
-@media (max-width: 980px) {
-  .searchRow,
-  .filtersLine { grid-template-columns: 1fr; }
-}
+.miniInput { height: 42px; padding: 0 12px; border-radius: 12px; background: #0f1016; border: 1px solid rgba(255,255,255,0.1); }
+.ghostBtn { background: transparent; border: 1px solid rgba(255,255,255,0.14); }
+@media (max-width: 980px) { .searchRow, .filtersLine { grid-template-columns: 1fr; } }
 </style>

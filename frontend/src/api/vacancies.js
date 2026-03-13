@@ -1,4 +1,4 @@
-﻿import { http } from "./http";
+import { http } from "./http";
 
 export const vacanciesApi = {
   getRecommendations({ limit = 10 } = {}) {
@@ -21,5 +21,9 @@ export const vacanciesApi = {
 
   create(payload) {
     return http.post("/api/v1/vacancies/", payload).then((r) => r.data);
+  },
+
+  delete(uuid) {
+    return http.delete(`/api/v1/vacancies/${uuid}`).then((r) => r.data);
   },
 };

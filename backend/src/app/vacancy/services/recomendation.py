@@ -5,9 +5,9 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import status, HTTPException
 
-from app.vacancy.models.vacancy import Vacancy
-from app.vacancy.repositories.vacancy import VacancyRepository
-from app.vacancy.repositories.search_request import SearchRequestRepository
+from app.vacancy.model import Vacancy
+from app.vacancy.repository import VacancyRepository
+from app.search_request.repository import SearchRequestRepository
 from app.users.repository import UserRepository
 from app.vacancy.filter import VacancyFilterQueryParams
 from app.enum import UserRole

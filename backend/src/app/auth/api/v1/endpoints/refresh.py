@@ -1,4 +1,4 @@
-from typing import Any
+﻿from typing import Any
 
 from fastapi import APIRouter, Response, status
 
@@ -20,25 +20,27 @@ router = APIRouter()
 @router.post(
     "/refresh",
     status_code=status.HTTP_200_OK,
-    summary="Обновление JWT токена",
-    response_model=GetTokenPairResponse,
+    summary="Обновить токены доступа",
     description=(
-        "Обновляет пару access/refresh токенов по существующему `refresh_token`,"
-        "переданному в cookie. Если токен невалиден или отсутствует "
-        "— возвращает ошибку."
-        "Также применяется ограничение частоты запросов — не более 2 в минуту."
+        "Обновляет access и refresh токены по действующему refresh_token. "
+        "Refresh токен передается в теле запроса."
     ),
+    response_model=GetTokenPairResponse,
     responses={
         200: {
-            "description": "Токен успешно обновлён",
+            "description": "Токены успешно обновлены",
             "model": GetTokenPairResponse,
         },
         400: {
-            "description": "Некорректный запрос",
+            "description": "Некорректный запрос на обновление токенов",
             "model": error_schemas.BadRequestErrorResponse,
         },
+        401: {
+            "description": "Пользователь не авторизован",
+            "model": error_schemas.UnauthorizedErrorResponse,
+        },
         429: {
-            "description": "Пользователь превысил число запросов",
+            "description": "Превышен лимит запросов",
             "model": RateLimitErrorResponse,
         },
         500: {
@@ -53,40 +55,37 @@ async def refresh_token(
     response: Response,
     session: DBSession,
 ) -> dict[str, Any]:
-
     return await AuthService.refresh_token(
         refresh_data.refresh_token,
         user,
         response,
-        session
+        session,
     )
 
 
 @router.post(
     "/check_role",
     status_code=status.HTTP_200_OK,
-    summary="Проверка валидности JWT токена",
-    response_model=GetUserRoleResponse,
+    summary="Проверить роль пользователя по токену",
     description=(
-        "Проверяет валидность access токена и возвращает информацию о пользователе. "
-        "Если токен валиден — возвращает данные пользователя (UUID, роль и т.д.). "
-        "Если токен невалиден или истёк — возвращает ошибку 400.\n\n"
-        "Параметры:\n"
-        "- **access_token** — JWT access токен для проверки.\n\n"
-        "Возвращает:\n"
-        "- **role** — роль пользователя в системе.\n\n"
+        "Проверяет access-токен и возвращает роль пользователя, которой он принадлежит."
     ),
+    response_model=GetUserRoleResponse,
     responses={
         200: {
-            "description": "JWT токен валиден, возвращена информация о пользователе",
+            "description": "Роль пользователя успешно определена",
             "model": GetUserRoleResponse,
         },
         400: {
-            "description": "JWT токен невалиден или истёк",
+            "description": "Передан невалидный или просроченный access-токен",
             "model": error_schemas.BadRequestErrorResponse,
         },
+        404: {
+            "description": "Пользователь не найден",
+            "model": error_schemas.NotFoundErrorResponse,
+        },
         429: {
-            "description": "Превышение лимита запросов",
+            "description": "Превышен лимит запросов",
             "model": RateLimitErrorResponse,
         },
         500: {
@@ -99,6 +98,4 @@ async def check_role(
     access_data: GetAccessTokenRequest,
     session: DBSession,
 ) -> dict[str, Any]:
-
     return await AuthService.get_role_from_jwt(access_data.access_token, session)
-

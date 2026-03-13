@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enum import VacancyStatus
 
-from app.vacancy.filter import VacancyFilterQueryParams
-from app.vacancy.models.vacancy import Vacancy
+from .filter import VacancyFilterQueryParams
+from .model import Vacancy
 
 
 class VacancyRepository:
@@ -122,16 +122,19 @@ class VacancyRepository:
         await session.commit()
 
         return vacancy
-    
+
     @staticmethod
     async def soft_delete(
         vacancy: Vacancy,
         session: AsyncSession,
-    ) -> None:
+    ) -> Vacancy:
 
         vacancy.status = VacancyStatus.BANNED
-        
+
         await session.commit()
+        await session.refresh(vacancy)
+
+        return vacancy
 
     @staticmethod
     async def create(

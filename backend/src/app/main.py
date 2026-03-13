@@ -1,4 +1,4 @@
-﻿from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,7 @@ from app.constant import AVATARS_BUCKET, AI_MODELS
 from app.vacancy import search_router as vacancy_router
 from app.mock import insert_mock_vacancies
 from app.company import company_router
+from app.resume import resume_router
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     app.include_router(users_router)
     app.include_router(vacancy_router)
     app.include_router(company_router)
+    app.include_router(resume_router)
 
     async with AsyncSessionLocal() as session:
         await insert_mock_vacancies(session)
