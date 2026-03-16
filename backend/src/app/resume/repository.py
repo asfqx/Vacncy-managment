@@ -1,6 +1,7 @@
 ﻿from collections.abc import Callable, Sequence
 from typing import Any
 from uuid import UUID
+import re
 
 from pydantic import BaseModel
 from sqlalchemy import case, desc, exists, func, literal, or_, select
@@ -18,6 +19,7 @@ class ResumeRepository:
 
     @staticmethod
     def _build_conditions(filters: dict[str, Any]) -> tuple[list[Any], bool]:
+        
         need_education_join = filters.get("education_level") is not None
 
         filter_mapping: dict[str, Callable[[Any], Any]] = {
@@ -47,9 +49,12 @@ class ResumeRepository:
 
     @staticmethod
     def _focused_query(raw_query: str) -> str:
-        tokens = [token.strip().lower() for token in raw_query.split() if token.strip()]
+        
+        normalized_query = re.sub(r"[^a-zA-Zа-яА-Я0-9]+", " ", raw_query.lower())
+        tokens = [token.strip() for token in normalized_query.split() if token.strip()]
         focused_tokens = [token for token in tokens if token not in GENERIC_TERMS]
-        return " ".join(focused_tokens) or raw_query.strip()
+        
+        return " ".join(focused_tokens) or normalized_query.strip() or raw_query.strip()
 
     @staticmethod
     def _normalized_title_words(column: Any) -> Any:
@@ -105,6 +110,10 @@ class ResumeRepository:
         conditions, need_education_join = ResumeRepository._build_conditions(stmt_filters)
 
         focused_query = ResumeRepository._focused_query(raw_query)
+        normalized_raw_for_compare = " ".join(
+            re.sub(r"[^a-zA-Zа-яА-Я0-9]+", " ", raw_query.lower()).split()
+        )
+        use_raw_trgm = focused_query == normalized_raw_for_compare
 
         raw_query_sql = literal(raw_query)
         focused_query_sql = literal(focused_query)
@@ -139,20 +148,24 @@ class ResumeRepository:
         score = (
             func.greatest(rank_ru, rank_en) * 0.35
             + func.greatest(focused_rank_ru, focused_rank_en) * 1.15
-            + (rank_trgm_title * 0.1)
+            + ((rank_trgm_title * 0.1) if use_raw_trgm else 0.0)
             + (focused_rank_trgm_title * 0.35)
             + (exact_focused_word_match * 2.5)
         ).label("score")
 
-        broad_match = or_(
+        broad_conditions: list[Any] = [
             Resume.search_vector.op("@@")(tsq_ru),
             Resume.search_vector.op("@@")(tsq_en),
             Resume.search_vector.op("@@")(focused_tsq_ru),
             Resume.search_vector.op("@@")(focused_tsq_en),
-            rank_trgm_title > 0.2,
-            focused_rank_trgm_title > 0.2,
+            focused_rank_trgm_title > 0.35,
             exact_focused_word_match == 1.0,
-        )
+        ]
+
+        if use_raw_trgm:
+            broad_conditions.append(rank_trgm_title > 0.3)
+
+        broad_match = or_(*broad_conditions)
 
         stmt = select(Resume, score)
 
