@@ -115,8 +115,8 @@ const experienceLabel = computed(() => {
 }
 
 .resumeCard__top {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
   align-items: flex-start;
 }
@@ -153,14 +153,14 @@ const experienceLabel = computed(() => {
 
 .badge {
   min-height: 38px;
-  min-width: 82px;
-  padding: 0 14px;
+  max-width: 100%;
+  padding: 8px 14px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
   text-align: center;
+  line-height: 1.25;
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.04);
@@ -191,8 +191,12 @@ const experienceLabel = computed(() => {
 
 @media (max-width: 640px) {
   .resumeCard__top {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .badge {
+    justify-self: flex-start;
   }
 }
 </style>

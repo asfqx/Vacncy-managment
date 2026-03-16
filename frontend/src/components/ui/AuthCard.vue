@@ -7,11 +7,7 @@
       <aside class="brandPanel">
         <div class="brandMark">vm</div>
         <p class="eyebrow">Vacancy Management</p>
-        <h1 class="brandTitle">Единое пространство для найма и откликов</h1>
-        <p class="brandText">
-          Управляйте аккаунтом, вакансиями и коммуникацией в одном спокойном интерфейсе.
-        </p>
-
+        <h1 class="brandTitle">Единое пространство для поиска сотрудников и работы</h1>
         <div class="brandNotes">
           <div class="note">
             <strong>Больше подходящих совпадений</strong>

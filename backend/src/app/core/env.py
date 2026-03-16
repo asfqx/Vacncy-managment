@@ -27,10 +27,6 @@ class SMTPSettings:
     smtp_mail_ssl_tls: bool = False
     smtp_debug: bool = True
 
-class ElasticSearch:
-    
-    elastic_url="http://elasticsearch:9200"
-    elastic_index_vacancies="vacancies_v1"
 
 class DBSettings:
     
@@ -121,7 +117,6 @@ class Settings(
     SMTPSettings,
     RabbitMQSettings,
     S3Settings,
-    ElasticSearch,
     AISettings,
 ):
     

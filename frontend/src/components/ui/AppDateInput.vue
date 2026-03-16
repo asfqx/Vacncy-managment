@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div ref="root" class="dateInput">
     <div
       class="dateInput__trigger"
@@ -255,9 +255,12 @@ onBeforeUnmount(() => {
 <style scoped>
 .dateInput {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
 .dateInput__trigger {
+  box-sizing: border-box;
   width: 100%;
   min-height: 52px;
   border-radius: 16px;
@@ -309,6 +312,7 @@ onBeforeUnmount(() => {
 }
 
 .dateInput__iconButton {
+  flex: 0 0 40px;
   width: 40px;
   height: 40px;
   padding: 0;
@@ -466,4 +470,5 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.68);
 }
 </style>
+
 

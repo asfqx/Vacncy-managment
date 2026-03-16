@@ -204,7 +204,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { getUserRoleFromToken, isAdminRole } from "../utils/auth";
-import { RouterLink } from "vue-router";
 import DashboardShell from "../components/layouts/DashboardShell.vue";
 import ResumeCard from "../components/resumes/ResumeCard.vue";
 import AppDateInput from "../components/ui/AppDateInput.vue";
@@ -489,14 +488,10 @@ onMounted(loadResume);
   padding: 24px;
 }
 
-.formPanel,
-.previewPanel {
-  height: 100%;
-}
-
 .previewPanel {
   display: flex;
   flex-direction: column;
+  align-self: start;
 }
 
 .stackPanel {
@@ -768,10 +763,3 @@ onMounted(loadResume);
   }
 }
 </style>
-
-
-
-
-
-
-

@@ -43,27 +43,6 @@ services:
     networks:
       - vacancy_network
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
-    networks:
-      - vacancy_network
-    depends_on:
-      redis:
-        condition: service_healthy
-
   minio:
     image: minio/minio
     container_name: minio
@@ -81,55 +60,9 @@ services:
     networks:
       - vacancy_network
 
-  taskiq_worker:
-    image: vacancy_backend:latest
-    container_name: taskiq_worker
-    command: uv run taskiq worker app.core.broker:broker
-    volumes:
-      - ./src/app:/src/app:cached  
-      - venv_data:/src/.venv   
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    restart: always
-    networks:
-      - vacancy_network
-
-  taskiq_scheduler:
-    image: vacancy_backend:latest
-    container_name: taskiq_scheduler
-    command: uv run taskiq scheduler app.core.scheduler:scheduler
-    volumes:
-      - ./src/app:/src/app:cached
-      - venv_data:/src/.venv
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    restart: always
-    networks:
-      - vacancy_network
-
-  taskiq_admin:
-    image: ghcr.io/taskiq-python/taskiq-admin:latest
-    platform: linux/amd64
-    container_name: taskiq_admin
+  mailhog:
+    image: mailhog/mailhog
     ports:
-      - 3000:3000
-    environment:
-      - TASKIQ_ADMIN_API_TOKEN=supersecret
-    volumes:
-      - admin_data:/usr/database/
-    depends_on:
-      taskiq_worker:
-        condition: service_started
-      taskiq_scheduler:
-        condition: service_started
-    restart: always
-    networks:
-      - vacancy_network
+      - "1025:1025" 
+      - "8025:8025"
+

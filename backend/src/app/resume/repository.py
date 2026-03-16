@@ -3,29 +3,18 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import case, desc, exists, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.resume.filter import ResumeFilterQueryParams
 from app.resume.models.education import ResumeEducation
 from app.resume.models.expirience import ResumeExperience
 from app.resume.models.resume import Resume
+from app.resume.const import GENERIC_TERMS
 
 
 class ResumeRepository:
-    GENERIC_TERMS = {
-        "разработчик",
-        "developer",
-        "dev",
-        "engineer",
-        "senior",
-        "middle",
-        "junior",
-        "intern",
-        "lead",
-        "специалист",
-        "программист",
-    }
+
 
     @staticmethod
     def _build_conditions(filters: dict[str, Any]) -> tuple[list[Any], bool]:
@@ -37,7 +26,14 @@ class ResumeRepository:
             "salary_to": lambda v: Resume.salary <= v,
             "birth_date_from": lambda v: Resume.birth_date >= v,
             "birth_date_to": lambda v: Resume.birth_date <= v,
-            "education_level": lambda v: ResumeEducation.level == v,
+            "education_level": lambda v: exists(
+                select(1)
+                .select_from(ResumeEducation)
+                .where(
+                    ResumeEducation.resume_id == Resume.uuid,
+                    ResumeEducation.level == v,
+                )
+            ),
             "cursor": lambda v: Resume.created_at < v,
         }
 
@@ -52,8 +48,19 @@ class ResumeRepository:
     @staticmethod
     def _focused_query(raw_query: str) -> str:
         tokens = [token.strip().lower() for token in raw_query.split() if token.strip()]
-        focused_tokens = [token for token in tokens if token not in ResumeRepository.GENERIC_TERMS]
+        focused_tokens = [token for token in tokens if token not in GENERIC_TERMS]
         return " ".join(focused_tokens) or raw_query.strip()
+
+    @staticmethod
+    def _normalized_title_words(column: Any) -> Any:
+        return func.trim(
+            func.regexp_replace(
+                func.lower(func.unaccent(column)),
+                r"[^a-zа-я0-9]+",
+                " ",
+                "gi",
+            )
+        )
 
     @staticmethod
     async def get(resume_uuid: UUID, session: AsyncSession) -> Resume | None:
@@ -90,20 +97,37 @@ class ResumeRepository:
 
     @staticmethod
     async def search(resume_name: str, filters: ResumeFilterQueryParams, session: AsyncSession) -> Sequence[Resume]:
+        raw_query = resume_name.strip()
+        if not raw_query:
+            return await ResumeRepository.get_all(filters, session)
+
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions, need_education_join = ResumeRepository._build_conditions(stmt_filters)
 
-        raw_query = resume_name.strip()
         focused_query = ResumeRepository._focused_query(raw_query)
 
-        normalized_query = func.lower(func.unaccent(raw_query))
-        normalized_focused_query = func.lower(func.unaccent(focused_query))
-        title_text = func.lower(func.unaccent(Resume.title))
+        raw_query_sql = literal(raw_query)
+        focused_query_sql = literal(focused_query)
 
-        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(raw_query))
-        tsq_en = func.websearch_to_tsquery("english", func.unaccent(raw_query))
-        focused_tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(focused_query))
-        focused_tsq_en = func.websearch_to_tsquery("english", func.unaccent(focused_query))
+        normalized_query = func.lower(func.unaccent(raw_query_sql))
+        normalized_focused_query = func.lower(func.unaccent(focused_query_sql))
+        title_text = func.lower(func.unaccent(Resume.title))
+        title_words = ResumeRepository._normalized_title_words(Resume.title)
+
+        exact_focused_word_match = case(
+            (
+                func.to_tsvector("simple", title_words).op("@@")(
+                    func.phraseto_tsquery("simple", func.unaccent(focused_query_sql))
+                ),
+                1.0,
+            ),
+            else_=0.0,
+        )
+
+        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(raw_query_sql))
+        tsq_en = func.websearch_to_tsquery("english", func.unaccent(raw_query_sql))
+        focused_tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(focused_query_sql))
+        focused_tsq_en = func.websearch_to_tsquery("english", func.unaccent(focused_query_sql))
 
         rank_ru = func.ts_rank_cd(Resume.search_vector, tsq_ru)
         rank_en = func.ts_rank_cd(Resume.search_vector, tsq_en)
@@ -115,9 +139,20 @@ class ResumeRepository:
         score = (
             func.greatest(rank_ru, rank_en) * 0.35
             + func.greatest(focused_rank_ru, focused_rank_en) * 1.15
-            + (rank_trgm_title * 0.2)
-            + (focused_rank_trgm_title * 0.7)
+            + (rank_trgm_title * 0.1)
+            + (focused_rank_trgm_title * 0.35)
+            + (exact_focused_word_match * 2.5)
         ).label("score")
+
+        broad_match = or_(
+            Resume.search_vector.op("@@")(tsq_ru),
+            Resume.search_vector.op("@@")(tsq_en),
+            Resume.search_vector.op("@@")(focused_tsq_ru),
+            Resume.search_vector.op("@@")(focused_tsq_en),
+            rank_trgm_title > 0.2,
+            focused_rank_trgm_title > 0.2,
+            exact_focused_word_match == 1.0,
+        )
 
         stmt = select(Resume, score)
 
@@ -126,17 +161,8 @@ class ResumeRepository:
 
         stmt = (
             stmt.where(*conditions)
-            .where(
-                or_(
-                    Resume.search_vector.op("@@")(tsq_ru),
-                    Resume.search_vector.op("@@")(tsq_en),
-                    Resume.search_vector.op("@@")(focused_tsq_ru),
-                    Resume.search_vector.op("@@")(focused_tsq_en),
-                    rank_trgm_title > 0.2,
-                    focused_rank_trgm_title > 0.2,
-                )
-            )
-            .order_by(desc(score), desc(Resume.created_at))
+            .where(broad_match)
+            .order_by(desc(score), desc(Resume.created_at), desc(Resume.uuid))
             .distinct()
             .limit(filters.limit + 1 if filters.limit else 51)
         )
@@ -237,4 +263,5 @@ class ResumeRepository:
         await session.commit()
 
         return experience_obj
+
 
