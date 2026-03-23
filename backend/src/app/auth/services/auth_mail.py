@@ -14,7 +14,7 @@ class AuthMailService(BaseMailService):
         username: str,
     ) -> None:
 
-        WELCOME_MESSAGE_SUBJECT = "Добро пожаловать в Vanga!"
+        WELCOME_MESSAGE_SUBJECT = "Добро пожаловать в Vacancy_manager!"
 
         template = cls.get_template("welcome.html")
         html_content = await template.render_async(username=username)
@@ -38,7 +38,7 @@ class AuthMailService(BaseMailService):
         token: str,
     ) -> None:
 
-        PASSWORD_RESET_MESSAGE_SUBJECT = "Сброс пароля в Vanga"
+        PASSWORD_RESET_MESSAGE_SUBJECT = "Сброс пароля в Vacancy_manager"
 
         template = cls.get_template("password_reset.html")
         html_content = await template.render_async(username=username, token=token)
@@ -62,7 +62,7 @@ class AuthMailService(BaseMailService):
         token: str,
     ) -> None:
         
-        EMAIL_CONFIRM_MESSAGE_SUBJECT = "Подтверждение почты в Vanga"
+        EMAIL_CONFIRM_MESSAGE_SUBJECT = "Подтверждение почты в Vacancy_manager"
 
         template = cls.get_template("email_confirm.html")
         html_content = await template.render_async(username=username, token=token)

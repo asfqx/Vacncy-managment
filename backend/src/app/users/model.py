@@ -40,3 +40,9 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
     )
+    
+    avatar_url: Mapped[str | None] = mapped_column(String(512))
+    
+    telegram: Mapped[str | None] = mapped_column(String(255))
+    
+    phone_number: Mapped[str | None] = mapped_column(String(32))

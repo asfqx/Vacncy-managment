@@ -1,4 +1,4 @@
-import datetime as dt
+﻿import datetime as dt
 from typing import Any
 from uuid import UUID
 
@@ -10,11 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.adapters.cache import BaseCacheAdapter, RedisAdapter
 from app.auth.schemas.auth import CreateSuperuserRequest
 from app.core import DBSession, settings
-from app.enum import UserRole
-from app.error_handler import (
-    handle_connection_errors,
-    handle_model_errors,
-)
+from app.enum import UserRole, UserStatus
+from app.error_handler import handle_connection_errors, handle_model_errors
 from app.security import Argon2Hasher, JWTUtils
 from app.users.model import User
 from app.users.repository import UserRepository
@@ -74,15 +71,13 @@ class AuthService:
         user = User(
             password_hash=Argon2Hasher.hash(password),
             email=email.lower(),
-            role = role,
+            role=role,
             username=username,
             fio=fio,
         )
 
         await UserRepository.create(user, session)
-
         await EmailConfirmService.send_token(email, background, session)
-
 
     @staticmethod
     @handle_connection_errors
@@ -103,13 +98,19 @@ class AuthService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
             )
+        
+        if exist_user.status != UserStatus.ACTIVE:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь забанен",
+            )
 
-        if not Argon2Hasher.verify(password, exist_user.password_hash): # type: ignore
+        if not Argon2Hasher.verify(password, exist_user.password_hash):
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED,
                 detail="Неверный пароль",
             )
-        
+
         if not exist_user.email_confirmed and exist_user.role is not UserRole.ADMIN:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED,
@@ -122,18 +123,18 @@ class AuthService:
             exist_user.uuid,
             exist_user.role,
         )
-
-        response.headers['Authorization'] = access_token
-
         refresh_token = JWTTokenService.create_refresh_token(
             exist_user.uuid,
             exist_user.role,
         )
 
+        await UserRepository.set_last_login(exist_user, session)
+
+        response.headers['Authorization'] = access_token
         response.set_cookie(
             key="refreshtoken",
             value=refresh_token,
-            max_age=60 * 60 * 24 * 60,  # 60 дней
+            max_age=60 * 60 * 24 * 60,
             path=settings.api_prefix,
             secure=not settings.debug,
             httponly=True,
@@ -144,8 +145,6 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
-
-
 
     @classmethod
     @handle_connection_errors
@@ -163,7 +162,7 @@ class AuthService:
         if not token:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail="Отсутсвтвует refresh_token в cookie",
+                detail="Отсутствует refresh_token в cookie",
             )
 
         payload = JWTUtils.decode(token)
@@ -239,7 +238,6 @@ class AuthService:
     ) -> dict[str, Any]:
 
         uuid = JWTTokenService.get_uuid_from_token(access_token)
-
         user = await UserRepository.get(UUID(uuid), session)
 
         if user is None:
@@ -251,3 +249,4 @@ class AuthService:
         return {
             "role": user.role,
         }
+

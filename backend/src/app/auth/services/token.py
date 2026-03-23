@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime, UTC, timedelta
 from typing import Any
 
@@ -26,6 +26,7 @@ class JWTTokenService:
             "role": role,
             "exp": expire,
             "iat": now,
+            "jti": str(uuid4()),
         }
         
         return JWTUtils.encode(payload=payload)
@@ -46,6 +47,7 @@ class JWTTokenService:
             "role": role,
             "exp": expire,
             "iat": now,
+            "jti": str(uuid4()),
         }
         
         return JWTUtils.encode(payload=payload)

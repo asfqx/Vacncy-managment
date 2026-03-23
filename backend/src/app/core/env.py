@@ -101,6 +101,12 @@ class JWTSettings:
     access_token_expire_minutes: int = 324572
     refresh_token_expire_days: int = 341876
 
+
+class AISettings:
+    
+    ai_model_url: str = "http://localhost:11434"
+    ai_model_name: str = "qwen3.5:9b"
+
     
 class Settings(
     BaseSettings,
@@ -111,6 +117,7 @@ class Settings(
     SMTPSettings,
     RabbitMQSettings,
     S3Settings,
+    AISettings,
 ):
     
     model_config = SettingsConfigDict(

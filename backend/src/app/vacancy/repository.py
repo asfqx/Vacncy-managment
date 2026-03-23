@@ -1,0 +1,251 @@
+﻿from collections.abc import Callable, Sequence
+from typing import Any
+from uuid import UUID
+import re
+
+from pydantic import BaseModel
+from sqlalchemy import case, desc, func, or_, select, literal
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.enum import VacancyStatus
+
+from .filter import VacancyFilterQueryParams
+from .model import Vacancy
+from .const import GENERIC_SEARCH_TERMS
+
+
+class VacancyRepository:
+
+    @staticmethod
+    def _build_conditions(filters: dict[str, Any]) -> list[Any]:
+        
+        filter_mapping: dict[str, Callable[[Any], Any]] = {
+            "city": lambda v: Vacancy.city.ilike(f"%{v}%"),
+            "company_id": lambda v: Vacancy.company_id == v,
+            "salary_from": lambda v: Vacancy.salary >= v,
+            "salary_to": lambda v: Vacancy.salary <= v,
+            "remote": lambda v: Vacancy.remote.is_(v),
+            "include_archived": lambda v: None if v else Vacancy.status == VacancyStatus.ACTIVE,
+            "cursor": lambda v: Vacancy.created_at < v,
+        }
+
+        conditions: list[Any] = []
+
+        for k, v in filters.items():
+            if k not in filter_mapping or v is None:
+                continue
+
+            condition = filter_mapping[k](v)
+            if condition is not None:
+                conditions.append(condition)
+
+        return conditions
+
+    @staticmethod
+    @staticmethod
+    def _focused_query(raw_query: str) -> str:
+
+        normalized_query = re.sub(r"[^a-zA-Zа-яА-Я0-9]+", " ", raw_query.lower())
+        tokens = [token.strip() for token in normalized_query.split() if token.strip()]
+        focused_tokens = [token for token in tokens if token not in GENERIC_SEARCH_TERMS]
+
+        return " ".join(focused_tokens) or normalized_query.strip() or raw_query.strip()
+
+    @staticmethod
+    def _normalized_title_words(column: Any) -> Any:
+        
+        return func.trim(
+            func.regexp_replace(
+                func.lower(func.unaccent(column)),
+                r"[^a-zа-я0-9]+",
+                " ",
+                "gi",
+            )
+        )
+
+    @staticmethod
+    async def get(
+        vacancy_uuid: UUID,
+        session: AsyncSession,
+    ) -> Vacancy | None:
+        
+        stmt = select(Vacancy).where(Vacancy.uuid == vacancy_uuid)
+        result = await session.execute(stmt)
+        
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_title(
+        vacancy_title: str,
+        session: AsyncSession,
+    ) -> Vacancy | None:
+        
+        stmt = select(Vacancy).where(Vacancy.title == vacancy_title)
+        result = await session.execute(stmt)
+        
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_company(
+        company_uuid: UUID,
+        session: AsyncSession,
+    ) -> Sequence[Vacancy]:
+        
+        stmt = select(Vacancy).where(Vacancy.company_id == company_uuid)
+        result = await session.execute(stmt)
+        
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_all(
+        filters: VacancyFilterQueryParams,
+        session: AsyncSession,
+    ) -> Sequence[Vacancy]:
+        
+        stmt_filters = filters.model_dump(exclude_none=True)
+        conditions = VacancyRepository._build_conditions(stmt_filters)
+
+        stmt = select(Vacancy).where(*conditions)
+
+        if filters.limit:
+            stmt = stmt.limit(filters.limit + 1)
+
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def search(
+        vacancy_name: str,
+        filters: VacancyFilterQueryParams,
+        session: AsyncSession,
+    ) -> Sequence[Vacancy]:
+
+        raw_query = vacancy_name.strip()
+        if not raw_query:
+            return await VacancyRepository.get_all(filters, session)
+
+        stmt_filters = filters.model_dump(exclude_none=True)
+        conditions = VacancyRepository._build_conditions(stmt_filters)
+
+        focused_query = VacancyRepository._focused_query(raw_query)
+        use_raw_trgm = focused_query == raw_query.lower()
+
+        raw_query_sql = literal(raw_query)
+        focused_query_sql = literal(focused_query)
+
+        normalized_query = func.lower(func.unaccent(raw_query_sql))
+        normalized_focused_query = func.lower(func.unaccent(focused_query_sql))
+        title_text = func.lower(func.unaccent(Vacancy.title))
+        title_words = VacancyRepository._normalized_title_words(Vacancy.title)
+
+        exact_focused_word_match = case(
+            (
+                func.to_tsvector("simple", title_words).op("@@")(
+                    func.phraseto_tsquery("simple", func.unaccent(focused_query_sql))
+                ),
+                1.0,
+            ),
+            else_=0.0,
+        )
+
+        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(raw_query_sql))
+        tsq_en = func.websearch_to_tsquery("english", func.unaccent(raw_query_sql))
+        focused_tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(focused_query_sql))
+        focused_tsq_en = func.websearch_to_tsquery("english", func.unaccent(focused_query_sql))
+
+        rank_ru = func.ts_rank_cd(Vacancy.search_vector, tsq_ru)
+        rank_en = func.ts_rank_cd(Vacancy.search_vector, tsq_en)
+        focused_rank_ru = func.ts_rank_cd(Vacancy.search_vector, focused_tsq_ru)
+        focused_rank_en = func.ts_rank_cd(Vacancy.search_vector, focused_tsq_en)
+        rank_trgm_title = func.similarity(title_text, normalized_query)
+        focused_rank_trgm_title = func.similarity(title_text, normalized_focused_query)
+
+        score = (
+            func.greatest(rank_ru, rank_en) * 0.35
+            + func.greatest(focused_rank_ru, focused_rank_en) * 1.15
+            + ((rank_trgm_title * 0.1) if use_raw_trgm else 0.0)
+            + (focused_rank_trgm_title * 0.35)
+            + (exact_focused_word_match * 2.5)
+        ).label("score")
+
+        broad_conditions: list[Any] = [
+            Vacancy.search_vector.op("@@")(tsq_ru),
+            Vacancy.search_vector.op("@@")(tsq_en),
+            Vacancy.search_vector.op("@@")(focused_tsq_ru),
+            Vacancy.search_vector.op("@@")(focused_tsq_en),
+            focused_rank_trgm_title > 0.35,
+            exact_focused_word_match == 1.0,
+        ]
+
+        if use_raw_trgm:
+            broad_conditions.append(rank_trgm_title > 0.3)
+
+        broad_match = or_(*broad_conditions)
+
+        stmt = (
+            select(Vacancy, score)
+            .where(*conditions)
+            .where(broad_match)
+            .order_by(desc(score), desc(Vacancy.created_at), desc(Vacancy.uuid))
+            .limit(filters.limit + 1 if filters.limit else 51)
+        )
+
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def delete(
+        vacancy: Vacancy,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        await session.delete(vacancy)
+        await session.commit()
+        
+        return vacancy
+
+    @staticmethod
+    async def soft_delete(
+        vacancy: Vacancy,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        vacancy.status = VacancyStatus.BANNED
+
+        await session.commit()
+        await session.refresh(vacancy)
+
+        return vacancy
+
+    @staticmethod
+    async def create(
+        vacancy_obj: Vacancy,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        session.add(vacancy_obj)
+
+        await session.commit()
+        await session.refresh(vacancy_obj)
+
+        return vacancy_obj
+
+    @staticmethod
+    async def update(
+        vacancy_obj: Vacancy,
+        new_data: BaseModel,
+        session: AsyncSession,
+    ) -> Vacancy:
+        
+        update_dict = new_data.model_dump(exclude_unset=True)
+
+        for field, value in update_dict.items():
+            if hasattr(vacancy_obj, field):
+                setattr(vacancy_obj, field, value)
+
+        await session.commit()
+        await session.refresh(vacancy_obj)
+
+        return vacancy_obj
+
+

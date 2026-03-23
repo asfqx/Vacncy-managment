@@ -1,4 +1,4 @@
-from typing import Annotated
+﻿from typing import Annotated
 
 from fastapi import Depends
 from pydantic import BaseModel, Field
@@ -13,7 +13,8 @@ class UserFilterQueryParams(BaseModel):
     fio: str | None = None
     role: UserRole | None = None
     status: UserStatus | None = None
-    limit: int = Field(..., ge=1, le=1000)
+    limit: int | None = Field(default=None, ge=1, le=1000)
 
 
 UserFilterDepends = Annotated[UserFilterQueryParams, Depends()]
+
