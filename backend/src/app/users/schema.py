@@ -1,18 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
-
-
-class CompanyProfileResponse(BaseModel):
-
-    uuid: UUID
-    title: str
-    description: str
-    website: str
-    company_size: int
-
-    model_config = ConfigDict(from_attributes=True)
+from pydantic import BaseModel, EmailStr
 
 
 class GetUserProfileResponse(BaseModel):
@@ -50,12 +39,6 @@ class UpdateUserProfileResponse(BaseModel):
     avatar_url: str | None = None
     telegram: str | None = None
     phone_number: str | None = None
-
-
-class CreateQR2FAResponse(BaseModel):
-
-    uri: str
-    secret: str
 
 
 class CreatePreSignedURLResponse(BaseModel):
