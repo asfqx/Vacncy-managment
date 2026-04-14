@@ -1,5 +1,6 @@
 from typing import Annotated
 from datetime import datetime, date
+from uuid import UUID
 
 from fastapi import Depends
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ class ResumeFilterQueryParams(BaseModel):
     birth_date_from: date | None = None
     birth_date_to: date | None = None
     cursor: datetime | None = None
+    cursor_uuid: UUID | None = None
     limit: int | None = None
 
 

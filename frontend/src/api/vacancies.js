@@ -1,14 +1,14 @@
 import { http } from "./http";
 
 export const vacanciesApi = {
-  getRecommendations({ limit = 10 } = {}) {
+  getRecommendations({ limit = 10, cursor, cursor_uuid } = {}) {
     return http
-      .get("/api/v1/vacancies/recommendation", { params: { limit } })
+      .get("/api/v1/vacancies/recommendation", { params: { limit, cursor, cursor_uuid } })
       .then((r) => r.data);
   },
 
   getAll(params) {
-    return http.get("/api/v1/vacancies", { params }).then((r) => r.data);
+    return http.get("/api/v1/vacancies/", { params }).then((r) => r.data);
   },
 
   search(params) {

@@ -1,7 +1,7 @@
 ﻿import { computed, reactive, ref } from "vue";
 import { vacanciesApi } from "../api/vacancies";
 
-function buildParams({ query, filters, cursor, limit }) {
+function buildParams({ query, filters, cursor, cursorUuid, limit }) {
   const params = {
     remote: filters.remote,
     city: filters.city || undefined,
@@ -10,6 +10,7 @@ function buildParams({ query, filters, cursor, limit }) {
     include_archived: false,
     company_id: filters.company_id || undefined,
     cursor: cursor || undefined,
+    cursor_uuid: cursorUuid || undefined,
     limit: limit || 10,
   };
 
@@ -47,16 +48,19 @@ export function useVacancies() {
 
   const limit = 10;
   const cursor = ref(null);
+  const cursorUuid = ref(null);
   const hasMore = ref(true);
 
   function computeNextCursor(list) {
     if (!list || list.length === 0) return null;
-    return list[list.length - 1].created_at;
+    const last = list[list.length - 1];
+    return { createdAt: last.created_at, uuid: last.uuid };
   }
 
   function reset() {
     items.value = [];
     cursor.value = null;
+    cursorUuid.value = null;
     hasMore.value = true;
     error.value = "";
   }
@@ -78,6 +82,7 @@ export function useVacancies() {
           query: "",
           filters,
           cursor: null,
+          cursorUuid: null,
           limit,
         });
 
@@ -98,6 +103,7 @@ export function useVacancies() {
           query: q,
           filters,
           cursor: null,
+          cursorUuid: null,
           limit,
         });
 
@@ -110,6 +116,7 @@ export function useVacancies() {
           query: "",
           filters,
           cursor: null,
+          cursorUuid: null,
           limit,
         });
 
@@ -118,8 +125,9 @@ export function useVacancies() {
       }
 
       const next = computeNextCursor(items.value);
-      cursor.value = next;
-      hasMore.value = Boolean(next && items.value.length >= limit);
+      cursor.value = next?.createdAt || null;
+      cursorUuid.value = next?.uuid || null;
+      hasMore.value = Boolean(cursor.value && cursorUuid.value && items.value.length >= limit);
     } catch (e) {
       const status = e?.response?.status;
 
@@ -147,6 +155,7 @@ export function useVacancies() {
         query: q,
         filters,
         cursor: cursor.value,
+        cursorUuid: cursorUuid.value,
         limit,
       });
 
@@ -166,8 +175,9 @@ export function useVacancies() {
       items.value = items.value.concat(batch);
 
       const next = computeNextCursor(batch);
-      cursor.value = next;
-      hasMore.value = Boolean(next && batch.length >= limit);
+      cursor.value = next?.createdAt || null;
+      cursorUuid.value = next?.uuid || null;
+      hasMore.value = Boolean(cursor.value && cursorUuid.value && batch.length >= limit);
     } catch (e) {
       const status = e?.response?.status;
 

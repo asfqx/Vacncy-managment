@@ -20,6 +20,7 @@ class RecomendationService:
         limit: int,
         session: AsyncSession,
         cursor: datetime | None,
+        cursor_uuid: UUID | None = None,
     ) -> Sequence[Resume]:
         
         exist_user = await UserRepository.get(user_uuid, session)
@@ -44,8 +45,15 @@ class RecomendationService:
             )
 
         profile_query = " ".join(sr.request for sr in search_requests)
-        filters = ResumeFilterQueryParams(limit=limit or 50, cursor=cursor)
+        filters = ResumeFilterQueryParams(
+            limit=limit or 50,
+            cursor=cursor,
+            cursor_uuid=cursor_uuid,
+        )
         resumes = await ResumeRepository.search(profile_query, filters, session)
+
+        if not resumes and cursor:
+            return resumes
 
         if not resumes:
             raise HTTPException(

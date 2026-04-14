@@ -221,11 +221,13 @@ async def recomendation(
     session: DBSession,
     limit: int = 50,
     cursor: datetime | None = None,
+    cursor_uuid: UUID | None = None,
 ) -> list[ResumeResponse]:
     resumes = await RecomendationService.recomendation(
         user_uuid=user.uuid,
         limit=limit,
         cursor=cursor,
+        cursor_uuid=cursor_uuid,
         session=session,
     )
 

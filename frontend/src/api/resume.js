@@ -10,16 +10,16 @@ export const resumeApi = {
   },
 
   getAll(params) {
-    return http.get("/api/v1/resumes", { params }).then((r) => r.data);
+    return http.get("/api/v1/resumes/", { params }).then((r) => r.data);
   },
 
   search(params) {
     return http.get("/api/v1/resumes/search", { params }).then((r) => r.data);
   },
 
-  getRecommendations({ limit = 10, cursor } = {}) {
+  getRecommendations({ limit = 10, cursor, cursor_uuid } = {}) {
     return http
-      .get("/api/v1/resumes/recommendation", { params: { limit, cursor } })
+      .get("/api/v1/resumes/recommendation", { params: { limit, cursor, cursor_uuid } })
       .then((r) => r.data);
   },
 

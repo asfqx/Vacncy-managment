@@ -26,10 +26,15 @@ class SearchRequestRepository:
     async def get_by_user(
         user_uuid: UUID,
         session: AsyncSession,
+        limit: int = 3,
     ) -> Sequence[SearchRequest]:
 
-        stmt = select(SearchRequest).where(SearchRequest.user_uuid == user_uuid)
-
+        stmt = (
+            select(SearchRequest)
+            .where(SearchRequest.user_uuid == user_uuid)
+            .order_by(SearchRequest.created_at.desc())
+            .limit(limit)
+        )
         result = await session.execute(stmt)
 
         return result.scalars().all()

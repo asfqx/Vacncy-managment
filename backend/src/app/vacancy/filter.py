@@ -16,6 +16,7 @@ class VacancyFilterQueryParams(BaseModel):
     company_id: UUID | None = None
     
     cursor: datetime | None = None
+    cursor_uuid: UUID | None = None
     limit: int | None = None
 
 

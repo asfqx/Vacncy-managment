@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import status, HTTPException
+from loguru import logger
 
 from app.vacancy.model import Vacancy
 from app.vacancy.repository import VacancyRepository
@@ -21,6 +22,7 @@ class RecomendationService:
         limit: int,
         session: AsyncSession,
         cursor: datetime | None,
+        cursor_uuid: UUID | None = None,
     ) -> Sequence[Vacancy]:
         
         exist_user = await UserRepository.get(user_uuid, session)
@@ -49,16 +51,24 @@ class RecomendationService:
             )
             
         profile_query = " ".join(sr.request for sr in search_requests)
-        
-        filters = VacancyFilterQueryParams(limit=limit or 50, cursor=cursor)
+
+        logger.info(f"{profile_query}")
+
+        filters = VacancyFilterQueryParams(
+            limit=limit or 50,
+            cursor=cursor,
+            cursor_uuid=cursor_uuid,
+        )
         
         vacancies = await VacancyRepository.search(profile_query, filters, session)
         
-        if not search_requests:
+        if not vacancies and cursor:
+            return vacancies
+
+        if not vacancies:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
                 detail="Вакансий не найдено",
             )
         
         return vacancies
-        

@@ -192,12 +192,14 @@ async def recomendation(
     sesssion: DBSession,
     limit: int = 50,
     cursor: datetime | None = None,
+    cursor_uuid: UUID | None = None,
 ) -> Sequence[Vacancy]:
     
     return await RecomendationService.recomendation(
         user_uuid=user.uuid,
         limit=limit,
         cursor=cursor,
+        cursor_uuid=cursor_uuid,
         session=sesssion,
     )
 
@@ -289,4 +291,3 @@ async def delete(
         vacancy_uuid=vacancy_uuid,
         session=sesssion,
     )
-

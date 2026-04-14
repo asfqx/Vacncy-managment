@@ -125,6 +125,7 @@ const items = ref([]);
 const query = ref("");
 const mode = ref("recommendation");
 const cursor = ref(null);
+const cursorUuid = ref(null);
 const hasMore = ref(true);
 const limit = 12;
 
@@ -156,18 +157,21 @@ function buildParams({ cursorValue }) {
     birth_date_to: filters.birth_date_to || undefined,
     resume_title: query.value.trim() || undefined,
     cursor: cursorValue || undefined,
+    cursor_uuid: cursorUuid.value || undefined,
     limit,
   };
 }
 
 function computeNextCursor(list) {
   if (!list?.length) return null;
-  return list[list.length - 1].created_at;
+  const last = list[list.length - 1];
+  return { createdAt: last.created_at, uuid: last.uuid };
 }
 
 function resetState() {
   items.value = [];
   cursor.value = null;
+  cursorUuid.value = null;
   hasMore.value = true;
   error.value = "";
 }
@@ -197,8 +201,10 @@ async function loadFirst() {
       }
     }
 
-    cursor.value = computeNextCursor(items.value);
-    hasMore.value = Boolean(cursor.value && items.value.length >= limit);
+    const next = computeNextCursor(items.value);
+    cursor.value = next?.createdAt || null;
+    cursorUuid.value = next?.uuid || null;
+    hasMore.value = Boolean(cursor.value && cursorUuid.value && items.value.length >= limit);
   } catch (e) {
     if (e?.response?.status === 404) error.value = "Резюме не найдены.";
     else error.value = "Не удалось загрузить резюме.";
@@ -218,7 +224,7 @@ async function loadMore() {
     let batch = [];
 
     if (mode.value === "search") batch = (await resumeApi.search(buildParams({ cursorValue: cursor.value }))) || [];
-    else if (mode.value === "recommendation") batch = (await resumeApi.getRecommendations({ limit, cursor: cursor.value })) || [];
+    else if (mode.value === "recommendation") batch = (await resumeApi.getRecommendations({ limit, cursor: cursor.value, cursor_uuid: cursorUuid.value })) || [];
     else batch = (await resumeApi.getAll(buildParams({ cursorValue: cursor.value }))) || [];
 
     if (!batch.length) {
@@ -227,8 +233,10 @@ async function loadMore() {
     }
 
     items.value = items.value.concat(batch);
-    cursor.value = computeNextCursor(batch);
-    hasMore.value = Boolean(cursor.value && batch.length >= limit);
+    const next = computeNextCursor(batch);
+    cursor.value = next?.createdAt || null;
+    cursorUuid.value = next?.uuid || null;
+    hasMore.value = Boolean(cursor.value && cursorUuid.value && batch.length >= limit);
   } catch {
     hasMore.value = false;
     error.value = "Не удалось подгрузить еще резюме.";

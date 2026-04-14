@@ -129,6 +129,9 @@ class ResumeService:
             
         resumes = list(await ResumeRepository.get_all(filters, session))
 
+        if not resumes and filters.cursor:
+            return []
+
         if not resumes:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
@@ -156,6 +159,9 @@ class ResumeService:
             )
             
         resumes = list(await ResumeRepository.search(resume_title, filters, session))
+
+        if not resumes and filters.cursor:
+            return []
 
         if not resumes:
             raise HTTPException(

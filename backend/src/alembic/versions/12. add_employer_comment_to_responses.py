@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "add_employer_comment_to_responses"
-down_revision: str | Sequence[str] | None = "11. add_search_indexes"
+revision: str = "c1aasd7as2d41"
+down_revision: str | Sequence[str] | None = "c1a8b7e2d341"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

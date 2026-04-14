@@ -1,17 +1,16 @@
 ﻿from collections.abc import Callable, Sequence
 from typing import Any
 from uuid import UUID
-import re
 
 from pydantic import BaseModel
-from sqlalchemy import case, desc, exists, func, literal, or_, select
+from sqlalchemy import and_, desc, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.resume.filter import ResumeFilterQueryParams
 from app.resume.models.education import ResumeEducation
 from app.resume.models.expirience import ResumeExperience
 from app.resume.models.resume import Resume
-from app.resume.const import GENERIC_TERMS
+from app.search import SearchQueryBuilder
 
 
 class ResumeRepository:
@@ -36,36 +35,31 @@ class ResumeRepository:
                     ResumeEducation.level == v,
                 )
             ),
-            "cursor": lambda v: Resume.created_at < v,
         }
 
-        conditions = [
-            filter_mapping[k](v)
-            for k, v in filters.items()
-            if k in filter_mapping and v is not None
-        ]
+        conditions: list[Any] = []
+
+        for k, v in filters.items():
+            if k == "cursor_uuid":
+                continue
+
+            if k == "cursor":
+                cursor_uuid = filters.get("cursor_uuid")
+                if cursor_uuid is None:
+                    conditions.append(Resume.created_at < v)
+                else:
+                    conditions.append(
+                        or_(
+                            Resume.created_at < v,
+                            and_(Resume.created_at == v, Resume.uuid < cursor_uuid),
+                        )
+                    )
+                continue
+
+            if k in filter_mapping and v is not None:
+                conditions.append(filter_mapping[k](v))
 
         return conditions, need_education_join
-
-    @staticmethod
-    def _focused_query(raw_query: str) -> str:
-        
-        normalized_query = re.sub(r"[^a-zA-Zа-яА-Я0-9]+", " ", raw_query.lower())
-        tokens = [token.strip() for token in normalized_query.split() if token.strip()]
-        focused_tokens = [token for token in tokens if token not in GENERIC_TERMS]
-        
-        return " ".join(focused_tokens) or normalized_query.strip() or raw_query.strip()
-
-    @staticmethod
-    def _normalized_title_words(column: Any) -> Any:
-        return func.trim(
-            func.regexp_replace(
-                func.lower(func.unaccent(column)),
-                r"[^a-zа-я0-9]+",
-                " ",
-                "gi",
-            )
-        )
 
     @staticmethod
     async def get(resume_uuid: UUID, session: AsyncSession) -> Resume | None:
@@ -90,12 +84,12 @@ class ResumeRepository:
 
         stmt = (
             stmt.where(*conditions)
-            .order_by(desc(Resume.created_at))
+            .order_by(desc(Resume.created_at), desc(Resume.uuid))
             .distinct()
         )
 
         if filters.limit:
-            stmt = stmt.limit(filters.limit + 1)
+            stmt = stmt.limit(filters.limit)
 
         result = await session.execute(stmt)
         return result.scalars().all()
@@ -109,75 +103,21 @@ class ResumeRepository:
         stmt_filters = filters.model_dump(exclude_none=True)
         conditions, need_education_join = ResumeRepository._build_conditions(stmt_filters)
 
-        focused_query = ResumeRepository._focused_query(raw_query)
-        normalized_raw_for_compare = " ".join(
-            re.sub(r"[^a-zA-Zа-яА-Я0-9]+", " ", raw_query.lower()).split()
-        )
-        use_raw_trgm = focused_query == normalized_raw_for_compare
+        search = SearchQueryBuilder.build(raw_query, Resume.title, Resume.search_vector)
+        if search is None:
+            return await ResumeRepository.get_all(filters, session)
 
-        raw_query_sql = literal(raw_query)
-        focused_query_sql = literal(focused_query)
-
-        normalized_query = func.lower(func.unaccent(raw_query_sql))
-        normalized_focused_query = func.lower(func.unaccent(focused_query_sql))
-        title_text = func.lower(func.unaccent(Resume.title))
-        title_words = ResumeRepository._normalized_title_words(Resume.title)
-
-        exact_focused_word_match = case(
-            (
-                func.to_tsvector("simple", title_words).op("@@")(
-                    func.phraseto_tsquery("simple", func.unaccent(focused_query_sql))
-                ),
-                1.0,
-            ),
-            else_=0.0,
-        )
-
-        tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(raw_query_sql))
-        tsq_en = func.websearch_to_tsquery("english", func.unaccent(raw_query_sql))
-        focused_tsq_ru = func.websearch_to_tsquery("russian", func.unaccent(focused_query_sql))
-        focused_tsq_en = func.websearch_to_tsquery("english", func.unaccent(focused_query_sql))
-
-        rank_ru = func.ts_rank_cd(Resume.search_vector, tsq_ru)
-        rank_en = func.ts_rank_cd(Resume.search_vector, tsq_en)
-        focused_rank_ru = func.ts_rank_cd(Resume.search_vector, focused_tsq_ru)
-        focused_rank_en = func.ts_rank_cd(Resume.search_vector, focused_tsq_en)
-        rank_trgm_title = func.similarity(title_text, normalized_query)
-        focused_rank_trgm_title = func.similarity(title_text, normalized_focused_query)
-
-        score = (
-            func.greatest(rank_ru, rank_en) * 0.35
-            + func.greatest(focused_rank_ru, focused_rank_en) * 1.15
-            + ((rank_trgm_title * 0.1) if use_raw_trgm else 0.0)
-            + (focused_rank_trgm_title * 0.35)
-            + (exact_focused_word_match * 2.5)
-        ).label("score")
-
-        broad_conditions: list[Any] = [
-            Resume.search_vector.op("@@")(tsq_ru),
-            Resume.search_vector.op("@@")(tsq_en),
-            Resume.search_vector.op("@@")(focused_tsq_ru),
-            Resume.search_vector.op("@@")(focused_tsq_en),
-            focused_rank_trgm_title > 0.35,
-            exact_focused_word_match == 1.0,
-        ]
-
-        if use_raw_trgm:
-            broad_conditions.append(rank_trgm_title > 0.3)
-
-        broad_match = or_(*broad_conditions)
-
-        stmt = select(Resume, score)
+        stmt = select(Resume, search.score)
 
         if need_education_join:
             stmt = stmt.join(ResumeEducation, ResumeEducation.resume_id == Resume.uuid)
 
         stmt = (
             stmt.where(*conditions)
-            .where(broad_match)
-            .order_by(desc(score), desc(Resume.created_at), desc(Resume.uuid))
+            .where(search.match)
+            .order_by(desc(Resume.created_at), desc(Resume.uuid), desc(search.score))
             .distinct()
-            .limit(filters.limit + 1 if filters.limit else 51)
+            .limit(filters.limit or 50)
         )
 
         result = await session.execute(stmt)
@@ -276,5 +216,3 @@ class ResumeRepository:
         await session.commit()
 
         return experience_obj
-
-

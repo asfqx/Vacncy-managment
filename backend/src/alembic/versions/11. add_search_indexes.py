@@ -23,20 +23,11 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_resumes_search_vector_gin ON resumes USING gin (search_vector)"
     )
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS ix_vacancys_title_trgm ON vacancys USING gin (title gin_trgm_ops)"
-    )
 
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS ix_resumes_title_trgm ON resumes USING gin (title gin_trgm_ops)"
-    )
 
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS ix_resumes_about_me_trgm")
-    op.execute("DROP INDEX IF EXISTS ix_resumes_title_trgm")
-    op.execute("DROP INDEX IF EXISTS ix_vacancys_description_trgm")
-    op.execute("DROP INDEX IF EXISTS ix_vacancys_title_trgm")
+
     op.execute("DROP INDEX IF EXISTS ix_resumes_search_vector_gin")
     op.execute("DROP INDEX IF EXISTS ix_vacancys_search_vector_gin")

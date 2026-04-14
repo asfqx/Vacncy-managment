@@ -30,6 +30,9 @@ class VacancyService:
         
         vacancies = await VacancyRepository.search(vacancy_name, filters, session)
 
+        if not vacancies and filters.cursor:
+            return vacancies
+
         if not vacancies:
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND,
@@ -52,6 +55,9 @@ class VacancyService:
     ) -> Sequence[Vacancy]:
         
         vacancies = await VacancyRepository.get_all(filters, session)
+
+        if not vacancies and filters.cursor:
+            return vacancies
 
         if not vacancies:
             raise HTTPException(
